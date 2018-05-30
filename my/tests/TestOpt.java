@@ -164,6 +164,10 @@ class Drawer{
 		return new Double(y+h/2).intValue();
 	}
 	
+	public int inversY(int y){
+		return h-y;
+	}
+	
 	public int getI(double i){
 		return new Double(i).intValue();
 	}
@@ -179,14 +183,14 @@ class Drawer{
 	public void drPoint(double x, double y){
 		int px = getX(x);
 		int py = getY(y);
-		pt.drawLine(px, py, px, py);
+		pt.drawLine(px, inversY(py), px, inversY(py));
 	}
 
 	public void drCircle(double ox, double oy, double r){
 		int oX = getX(ox);
 		int oY = getY(oy);
 		int R = getI(r);
-		pt.drawOval(oX-R, oY-R, R*2, R*2);
+		pt.drawOval(oX-R, inversY(oY-R), R*2, R*2);
 	}
 	
 	public void drOval(double ox, double oy, double a, double b){
@@ -194,7 +198,7 @@ class Drawer{
 		int oY = getY(oy);
 		int A = getI(a);
 		int B = getI(b);
-		pt.drawOval(oX-A, oY-B, A*2, B*2);
+		pt.drawOval(oX-A, inversY(oY-B), A*2, B*2);
 	}
 	
 	public void drRect(double ox, double oy, double width, double height){
@@ -202,7 +206,7 @@ class Drawer{
 		int oY = getY(oy);
 		int wI = getI(width);
 		int hI = getI(height);
-		pt.drawRect(oX-wI/2, oY-hI/2, wI, hI);
+		pt.drawRect(oX-wI/2, inversY(oY-hI/2), wI, hI);
 	}
 	
 	public void fiRect(double ox, double oy, double width, double height){
@@ -210,7 +214,7 @@ class Drawer{
 		int oY = getY(oy);
 		int wI = getI(width);
 		int hI = getI(height);
-		pt.fillRect(oX-wI/2, oY-hI/2, wI, hI);
+		pt.fillRect(oX-wI/2, inversY(oY-hI/2), wI, hI);
 	}
 	
 	public void flRect(double ox, double oy, double width, double height){
@@ -218,11 +222,11 @@ class Drawer{
 		int oY = getY(oy);
 		int wI = getI(width);
 		int hI = getI(height);
-		pt.fillRect(oX-wI/2, oY-hI/2, wI, hI);
+		pt.fillRect(oX-wI/2, inversY(oY-hI/2), wI, hI);
 	}
 	
 	public void drLine(double x1, double y1, double x2, double y2){
-		pt.drawLine(getX(x1), getY(y1), getX(x2), getY(y2));
+		pt.drawLine(getX(x1), inversY(getY(y1)), getX(x2), inversY(getY(y2)));
 	}
 
 	public void drLXY(L l, double length){
@@ -253,7 +257,7 @@ class Drawer{
 	}
 	
 	public void drStr(Object val, double x, double y){
-		pt.drawString(val.toString(), getX(x), getY(y));
+		pt.drawString(val.toString(), getX(x), inversY(getY(y)));
 	}
 
 	public void drLineXY(V v1, V v2){
@@ -302,10 +306,10 @@ class Drawer{
 //		test7();
 //		test7V2();
 
-//		test7V3();
+		test7V3();
 
 //		test7V3();
-		test7V3D();
+//		test7V3D();
 
 //		statisticA();
 //		showTrm();
@@ -1267,11 +1271,11 @@ class Drawer{
 	public void test7V3(){
 		double r = 1;
 		if(curve==null){
-//			curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
-//			curve.setRange(90, 200);
+			curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
+			curve.setRange(90, 200);
 			
-			curve = new SegCurve(r, r*2.4, r*2.7, 1/1.5);
-			curve.setRange(40, 200);
+//			curve = new SegCurve(r, r*2.4, r*2.7, 1/1.5);
+//			curve.setRange(40, 200);
 			
 			curve.setCenter(new V(0, -200, 0));
 			curve.setHue(7, 100);
