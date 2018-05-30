@@ -332,6 +332,14 @@ class Drawer{
 		
 	}
 	
+	public void drFun(FunReal fun, V pO, V scale){
+		pt.setColor(new Color(0.5f,0.5f,0.5f,0.5f));
+		drX(pO.x);
+		drY(pO.y);
+
+		fun.show(this, pO, scale);
+	}
+	
 	
 	public void show(){
 //		Gra gra = new Gra(11, 20, 1);		
@@ -1880,47 +1888,8 @@ class Drawer{
 	}
 	
 	public void showFunction(){
-		FunRealXY f = new FunRealXY() {
-			@Override
-			public Double fun(double x) {
-				double n = 1/1.5;
-				double y = AT(S(x)/(C(x)-1/n));
-
-				if(abs(x-y)>90 || abs(y)>90){
-					return null;
-				}
-				
-				if(abs(S(y)/n)>1){
-					System.out.println(y);
-				}
-				
-				if(!U.is0(S(y)-S(y-x)*n)){
-					System.out.println( S(x)-S(y-x)*n );
-					return null;
-				}
-				
-				System.out.println(x+","+y);
-				
-				return y;
-			}
-		};
-		
-		
-		FunReal fxya = new FunRealXY(){
-			double A = 0;
-			double y = 100;
-			@Override
-			public Double fun(double x) {
-				double AIn = U.is0(x) ? 90 : U.AC(x/pow(x*x+y*y, 0.5));
-				
-				Double B = f.fun(A-AIn);
-				
-				return B;
-			}
-			
-		};
-		
-		drFunXY(fxya, new V(-500,0,0), new V(3,3,0), -200, 600, 0.5);
+			P1P2AOutToADir fun = new P1P2AOutToADir(1/1.5);
+			drFun(fun, new V(0,-320,0), new V(2,2,0));
 		
 	}
 	
@@ -2910,7 +2879,9 @@ class V{
 }
 
 abstract class FunReal{
-	public abstract double[] fun(double[] xs); 
+	public abstract double[] fun(double[] xs);
+
+	public abstract void show(Drawer drawer, V pO, V scale);
 }
 
 abstract class FunRealXY extends FunReal{
@@ -2920,6 +2891,126 @@ abstract class FunRealXY extends FunReal{
 		return y==null? null : new double[]{y};
 	} 
 }
+
+class OutToADir extends FunRealXY{
+	double n;
+	
+	public OutToADir(double n){
+		this.n = n;
+	}
+	
+	@Override
+	public Double fun(double x) {
+		double y = AT(S(x)/(C(x)-1/n));
+
+		if(abs(x-y)>90 || abs(y)>90){
+			return null;
+		}
+		
+		if(abs(S(y)/n)>1){
+			return null;
+		}
+		
+		if(!U.is0(S(y)-S(y-x)*n)){
+			return null;
+		}
+		return y;
+	}
+
+	@Override
+	public void show(Drawer drawer, V pO, V scale) {
+		// TODO Auto-generated method stub
+		
+	}
+}
+
+class P1P2AOutToADir extends FunReal{
+	OutToADir fOutToADir;
+	Double filtreOutA = null;
+	double n;
+	
+	public P1P2AOutToADir(double n) {
+		this.n = n;
+		this.fOutToADir = new OutToADir(n);
+	}
+	
+	public P1P2AOutToADir(double n, Double filtreOutA) {
+		this.n = n;
+		this.fOutToADir = new OutToADir(n);
+		this.filtreOutA = filtreOutA;
+	}
+	
+	public Double fun(V pO, V p, double outA){
+		V in = sub(p, pO);
+		if(U.is0(in.absXY())){
+			return null;
+		}
+		
+		double AIn = in.AXY();
+		Double fOut = fOutToADir.fun(outA-AIn);
+		return fOut==null ? null : fOut+AIn-90;
+		
+	}
+	
+	@Override
+	public double[] fun(double[] xs) {
+		Double ADir = fun(new V(xs[0], xs[1], xs[2]), new V(xs[3], xs[4], xs[5]), xs[6]);
+		if(ADir==null){
+			return null;
+		}else{
+			return new double[]{ADir};
+		}
+	}
+	
+	@Override
+	public void show(Drawer drawer, V pC, V scale) {
+		double rangeXY = 200;
+		double dXY = 20;
+		
+//		for(double i=-rangeXY; i<=0; i+=dXY){
+		for(double i=-rangeXY; i<=rangeXY; i+=dXY){
+			filtreOutA = 180d * (i+rangeXY)/rangeXY/2;
+			V pOI = add(pC, V.mult(new V(i, 0, 0), scale));
+			showSingle(drawer, pOI, pC, scale);
+		}
+	}
+	
+	public void showSingle(Drawer drawer, V pO, V pC, V scale) {
+		double rangeXY = 300;
+		double dXY = 10;
+		double dA = 4.5;
+		
+		for(double outA=0; outA<=180; outA += dA){
+			if(filtreOutA != null && !U.is0(outA-filtreOutA)){
+				continue;
+			}
+			float hue = new Double(outA/200).floatValue();
+			Color cl = Color.getHSBColor(hue, 1, 1);
+			cl = new Color(cl.getRed()/255f, cl.getGreen()/255f, cl.getBlue()/255f, 0.5f);
+
+			for(double x = -rangeXY; x<=rangeXY; x+=dXY){
+				for(double y = 0; y<=rangeXY; y+=dXY){
+					V p = add(mult(scale, new V(x, y, 0)), pC);
+					drawer.pt.setColor(Color.black);
+					drawer.drPoint(p.x, p.y);		
+					Double dirA = fun(pO, p, outA);
+					
+					if(dirA!=null){						
+//						drawer.pt.setColor(cl);
+						L l = new L(p, new V(C(dirA), S(dirA), 0));
+						drawer.drLXY(l, dXY*scale.x/3);
+						drawer.drLXY(l, -dXY*scale.y/3);
+					}
+				}
+				
+			}
+		}
+		
+	}
+
+}
+
+
 
 interface Surface{
 	public L out(L in, double n);
