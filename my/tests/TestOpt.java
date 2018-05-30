@@ -271,8 +271,68 @@ class Drawer{
 	public void drLineYZ(V v1, V v2){
 		drLine(v1.y, v1.z, v2.y, v2.z);
 	}
-	
 
+	public void drX(double x){
+		drLine(x, -100*h, x, 100*h);
+	}
+
+	public void drY(double y){
+		drLine(-100*w, y, 100*w, y);
+	}
+
+	public void drFunXY(FunReal fun, V pO, V scale, double minX, double maxX, double dx){
+		pt.setColor(new Color(0.5f,0.5f,0.5f,0.5f));
+		drX(pO.x);
+		drY(pO.y);
+
+		drX(minX*scale.x+pO.x);
+		drX(maxX*scale.x+pO.x);
+
+		Double y0 = null;
+		Double x0 = null;
+		
+		double x = minX;
+		for(; x<maxX; x+=dx){
+			double[] ys = fun.fun(new double[]{x});
+			Double y = ys==null ? null : ys[0];
+			
+			if(y!=null){
+				pt.setColor(Color.gray);
+				if(x0!=null && y0!=null){
+					drLine(x0*scale.x+pO.x, y0*scale.y+pO.y, x*scale.x+pO.x, y*scale.y+pO.y);
+				}else{
+					drPoint(x*scale.x+pO.x, y*scale.y+pO.y);
+				}
+			}else{
+				pt.setColor(Color.pink);
+				drPoint(x*scale.x+pO.x, pO.y);
+			}
+			
+			x0 = x;
+			y0 = y;
+		}
+
+		
+		x = maxX;
+		double[] ys = fun.fun(new double[]{x});
+		Double y = ys==null ? null : ys[0];
+		
+		if(y!=null){
+			pt.setColor(Color.gray);
+			if(x0!=null && y0!=null){
+				drLine(x0*scale.x+pO.x, y0*scale.y+pO.y, x*scale.x+pO.x, y*scale.y+pO.y);
+			}else{
+				drPoint(x*scale.x+pO.x, y*scale.y+pO.y);
+			}
+		}else{
+			pt.setColor(Color.pink);
+			drPoint(x*scale.x+pO.x, pO.y);
+		}
+
+		
+	}
+	
+	
 	public void show(){
 //		Gra gra = new Gra(11, 20, 1);		
 //		pt.setClip(gra.getArea(w/2, h/2, 2, 1, new V(0,0,2)));
@@ -306,12 +366,14 @@ class Drawer{
 //		test7();
 //		test7V2();
 
-		test7V3();
+//		test7V3();
 
 //		test7V3();
 //		test7V3D();
 
 //		statisticA();
+		
+		showFunction();
 //		showTrm();
 		
 //		showHSQX();
@@ -1204,8 +1266,9 @@ class Drawer{
 	
 	public void test7V2(){
 		double r = 100;
-		SegCurve curve = new SegCurve(r, r*2, r*1.9, 1.5);
-		curve.setRange(90, 800);
+//		SegCurve curve = new SegCurve(r, r*2, r*1.9, 1.5);
+		curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
+		curve.setRange(90, 50);
 		curve.setCenter(new V(0, -200, 0));
 		curve.setHue(10, 50);
 		curve.initPArray();
@@ -1272,6 +1335,7 @@ class Drawer{
 		double r = 1;
 		if(curve==null){
 			curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
+//			curve = new SegCurve(r, r*2, r*2, 1.5);
 			curve.setRange(90, 200);
 			
 //			curve = new SegCurve(r, r*2.4, r*2.7, 1/1.5);
@@ -1283,7 +1347,7 @@ class Drawer{
 			int dH = 0;
 //			curve.setHue(7, 100, 0+dH, 10+dH, 20+dH, 30+dH, 40+dH, 50+dH, 60+dH, 70+dH, 80+dH, 90+dH, 100+dH);
 			
-	//		curve.initPArray_simple();
+//			curve.initPArray_simple();
 			curve.initPArray();
 		}
 		
@@ -1407,6 +1471,9 @@ class Drawer{
 		boolean limitZ = false;
 		
 		if(curve==null){
+//			curve = new SegCurve(r, r*2, r*2, 1.5);
+//			curve.setRange(90, 200);
+
 			curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
 			curve.setRange(90, 50);
 //			curve = new SegCurve(r, r*2.4, r*2.7, 1/1.5);
@@ -1438,7 +1505,7 @@ class Drawer{
 //			curve.setHue(7, 100, hues);
 			
 
-	//		curve.initPArray_simple();
+//			curve.initPArray_simple();
 			curve.initPArray();
 		}
 		
@@ -1649,8 +1716,8 @@ class Drawer{
 	public void statisticA(){
 		double n = 1.5;
 		
-		int accu = 500;
-		int accu2 = 100;
+		int accu = 200;
+		int accu2 = 50;
 		
 //		int vPerAccu2 = 100;
 		
@@ -1767,7 +1834,7 @@ class Drawer{
 		int dirY = 1;
 		for(int i=0; i<=accu; i+=1){
 			if(new Double(i/(accu/accu2)).intValue()%4!=0){
-				continue;
+//				continue;
 			}
 			
 			V pO = new V(-i*R/accu, -h, 0);
@@ -1809,6 +1876,51 @@ class Drawer{
 			statI.show(this, scaleX, scaleY*accu2/accu);
 		}
 
+		
+	}
+	
+	public void showFunction(){
+		FunRealXY f = new FunRealXY() {
+			@Override
+			public Double fun(double x) {
+				double n = 1/1.5;
+				double y = AT(S(x)/(C(x)-1/n));
+
+				if(abs(x-y)>90 || abs(y)>90){
+					return null;
+				}
+				
+				if(abs(S(y)/n)>1){
+					System.out.println(y);
+				}
+				
+				if(!U.is0(S(y)-S(y-x)*n)){
+					System.out.println( S(x)-S(y-x)*n );
+					return null;
+				}
+				
+				System.out.println(x+","+y);
+				
+				return y;
+			}
+		};
+		
+		
+		FunReal fxya = new FunRealXY(){
+			double A = 0;
+			double y = 100;
+			@Override
+			public Double fun(double x) {
+				double AIn = U.is0(x) ? 90 : U.AC(x/pow(x*x+y*y, 0.5));
+				
+				Double B = f.fun(A-AIn);
+				
+				return B;
+			}
+			
+		};
+		
+		drFunXY(fxya, new V(-500,0,0), new V(3,3,0), -200, 600, 0.5);
 		
 	}
 	
@@ -2795,6 +2907,18 @@ class V{
 		return new V(multD(matrix[0], v), multD(matrix[1], v), multD(matrix[2], v));		
 	}
 
+}
+
+abstract class FunReal{
+	public abstract double[] fun(double[] xs); 
+}
+
+abstract class FunRealXY extends FunReal{
+	public abstract Double fun(double x);	
+	public double[] fun(double[] xs){
+		Double y = fun(xs[0]);
+		return y==null? null : new double[]{y};
+	} 
 }
 
 interface Surface{
