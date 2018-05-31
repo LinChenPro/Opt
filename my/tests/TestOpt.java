@@ -376,12 +376,12 @@ class Drawer{
 
 //		test7V3();
 
-//		test7V3();
+		test7V3();
 //		test7V3D();
 
 //		statisticA();
 		
-		showFunction();
+//		showFunction();
 //		showTrm();
 		
 //		showHSQX();
@@ -1342,9 +1342,26 @@ class Drawer{
 	public void test7V3(){
 		double r = 1;
 		if(curve==null){
-			curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
-//			curve = new SegCurve(r, r*2, r*2, 1.5);
-			curve.setRange(90, 200);
+			// prepare for  avegage :  find H by function
+//			double hFind = SegCurve.findAverageH(100, 1.5);
+//			System.out.println("hFind="+hFind);
+			
+//			curve = new SegCurve(r, r*2, r*2*hFind, 1.5); // average
+//			curve = new SegCurve(r, r*2.08, r*2*hFind*1.3, 1.5); // stat with h find
+			curve = new SegCurve(r, r*2.4, r*2.7, 1.5); // stat
+
+			
+//			curve = new SegCurve(r, r*1.5, r*5, 1.5); // stat
+			
+			
+			
+			curve.setRange(90, 50);
+			
+			
+			
+//			curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
+////		curve = new SegCurve(r, r*2, r*2, 1.5);
+//			curve.setRange(90, 50);
 			
 //			curve = new SegCurve(r, r*2.4, r*2.7, 1/1.5);
 //			curve.setRange(40, 200);
@@ -1353,10 +1370,11 @@ class Drawer{
 			curve.setHue(7, 100);
 			
 			int dH = 0;
-//			curve.setHue(7, 100, 0+dH, 10+dH, 20+dH, 30+dH, 40+dH, 50+dH, 60+dH, 70+dH, 80+dH, 90+dH, 100+dH);
+//			curve.setHue(7, 100, 0+dH, 10+dH, 20+dH, 30+dH, 40+dH, 50+dH, 60+dH, 70+dH, 80+dH, 90+dH, 100+dH, 110+dH, 120+dH, 130+dH, 140+dH, 150+dH);
 			
 //			curve.initPArray_simple();
 			curve.initPArray();
+//			curve.initPArray_average();
 		}
 		
 		Color gray = new Color(0.2f,0.2f,0.2f,0.05f);
@@ -1738,7 +1756,11 @@ class Drawer{
 		
 		// SegCurve
 		if(curve==null){
-			curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
+			double hFind = SegCurve.findAverageH(100, 1.5);
+			System.out.println(hFind);
+			
+			curve = new SegCurve(r*0.95, r*2, r*2*hFind*1.3, 1.5); // stat with h find
+//			curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
 			curve.setRange(90, accu);
 			curve.setCenter(new V(0, -0, 0));
 //			curve.setHue(7, 100);
@@ -2688,6 +2710,7 @@ class U{
 				N += data[1];
 			}
 			psum += data[1]/(1+abs(data[0]/abs(v)));
+//			psum += data[1];
 		}
 		
 		if(is0(N)){
@@ -2965,7 +2988,7 @@ class P1P2AOutToADir extends FunReal{
 	@Override
 	public void show(Drawer drawer, V pC, V scale) {
 		double rangeXY = 200;
-		double dXY = 20;
+		double dXY = 5;
 		
 //		for(double i=-rangeXY; i<=0; i+=dXY){
 		for(double i=-rangeXY; i<=rangeXY; i+=dXY){
@@ -2973,12 +2996,13 @@ class P1P2AOutToADir extends FunReal{
 			V pOI = add(pC, V.mult(new V(i, 0, 0), scale));
 			showSingle(drawer, pOI, pC, scale);
 		}
+		System.out.println("finished");
 	}
 	
 	public void showSingle(Drawer drawer, V pO, V pC, V scale) {
-		double rangeXY = 300;
+		double rangeXY = 320;
 		double dXY = 10;
-		double dA = 4.5;
+		double dA = 4.5/2;
 		
 		for(double outA=0; outA<=180; outA += dA){
 			if(filtreOutA != null && !U.is0(outA-filtreOutA)){
@@ -2986,21 +3010,48 @@ class P1P2AOutToADir extends FunReal{
 			}
 			float hue = new Double(outA/200).floatValue();
 			Color cl = Color.getHSBColor(hue, 1, 1);
-			cl = new Color(cl.getRed()/255f, cl.getGreen()/255f, cl.getBlue()/255f, 0.5f);
+//			cl = new Color(cl.getRed()/255f, cl.getGreen()/255f, cl.getBlue()/255f, 0.02f);
+//			cl = new Color(0f,0f,0f, 0.02f);
 
 			for(double x = -rangeXY; x<=rangeXY; x+=dXY){
 				for(double y = 0; y<=rangeXY; y+=dXY){
 					V p = add(mult(scale, new V(x, y, 0)), pC);
-					drawer.pt.setColor(Color.black);
-					drawer.drPoint(p.x, p.y);		
 					Double dirA = fun(pO, p, outA);
 					
 					if(dirA!=null){						
-//						drawer.pt.setColor(cl);
+						drawer.pt.setColor(cl);
+					
+					// draw null aussi
+//					}else{
+//						drawer.pt.setColor(Color.black);
+//					}
+//					{
+						
+						// show direction
 						L l = new L(p, new V(C(dirA), S(dirA), 0));
 						drawer.drLXY(l, dXY*scale.x/3);
 						drawer.drLXY(l, -dXY*scale.y/3);
+
+						
+						
+						// show function line
+//						double xA = p.x+ (90-outA)/90 * dXY*0.4*scale.x;
+//						double yA = dirA != null
+//								? p.y+(dirA)/90 * dXY*0.4*scale.y
+//								: p.y;
+//
+//						if(new Double(abs(outA)).intValue()%45==0){
+//							drawer.drLine(xA, yA+2, xA, yA-2);
+//						}
+//						drawer.drPoint(xA, yA);
+//						
+//						drawer.pt.setColor(Color.black);
+//						drawer.drPoint(p.x, yA);
+						
 					}
+
+					drawer.pt.setColor(Color.black);
+					drawer.drPoint(p.x, p.y);		
 				}
 				
 			}
@@ -3304,9 +3355,38 @@ class SegCurve{
 
 	}
 	
-	public void initPArray(){
+	public static double findAverageH(int c, double n){
+		P1P2AOutToADir fun = new P1P2AOutToADir(1/n);
+
+		Double selectedH = null;
+		Double selectedAvgSumA = null;
+				
+		for(double y=0; y<5*c; y+=0.1){
+			double sumA = 0;
+			double count = 0;
+			V p1 = new V(0, y, 0);
+			for(double i=0; i<=c; i++){
+				V pO = new V(-i, 0, 0);
+				Double dirA = fun.fun(pO, p1, 90-90*i/c);
+				if(dirA != null){
+					sumA += abs(dirA);
+					count++;
+				}
+			}
+			sumA /= count;
+			if(selectedAvgSumA==null || selectedAvgSumA>sumA){
+				selectedH = y;
+				selectedAvgSumA = sumA;
+			}
+		}
 		
+		return selectedH/c;
+	}
+	
+	public void initPArray_average(){
 		pArray = new L[dv+1];
+
+		P1P2AOutToADir fun = new P1P2AOutToADir(1/this.n);
 		
 		pArray[0] = new L(new V(0, 0, 0), new V(1, 0, 0));
 		
@@ -3315,7 +3395,59 @@ class SegCurve{
 			double tg0 = pArray[i-1].dir.y / pArray[i-1].dir.x;
 			double x = pArray[i-1].o.x+dx;
 			double y = pArray[i-1].o.y+dx*tg0;
+			
 			V p = new V(x, y, pArray[i-1].o.z);
+			
+			double tg1 = averageForI(fun, i, p);
+			pArray[i] = new L(p, new V(1, tg1, 0));
+
+		}
+
+	}
+
+	private double averageForI(P1P2AOutToADir fun, int i, V p) {
+		double avgA = 0;
+		double count = 0;
+		for(double d=-dv; d<=dv; d++){
+			V pO = new V(d*l/dv, -h, 0);
+			
+			if(i==1)System.out.println(d+"::"+(90+90*d/dv));
+			
+			Double dirA = fun.fun(pO, p, 90+90*d/dv);
+			if(dirA != null){
+				avgA += dirA;
+				count++;
+			}
+		}
+		avgA /= count;
+		double tg1 = T(avgA);
+		return tg1;
+	}
+	
+	public void initPArray(){
+		
+		pArray = new L[dv+1];
+		
+		pArray[0] = new L(new V(0, 0, 0), new V(1, 0, 0));
+
+		// failed attempt : combine init and init average A
+//		P1P2AOutToADir fun = new P1P2AOutToADir(1/this.n);
+
+		double dx = r/dv;
+//		double swichP = 1; 		// failed attempt : combine init and init average B
+		for(int i=1; i<=dv; i++){			
+			double tg0 = pArray[i-1].dir.y / pArray[i-1].dir.x;
+			double x = pArray[i-1].o.x+dx;
+			double y = pArray[i-1].o.y+dx*tg0;
+			V p = new V(x, y, pArray[i-1].o.z);
+			
+			// failed attempt : combine init and init average C fin
+//			if(i>dv*swichP){
+//				double tg1 = averageForI(fun, i, p);
+//				pArray[i] = new L(p, new V(1, tg1, 0));
+//				continue;
+//			}
+			
 			V pLeft = new V(-p.x, p.y, p.z);
 			
 			// get tg1
