@@ -186,11 +186,30 @@ class Drawer{
 		pt.drawLine(px, inversY(py), px, inversY(py));
 	}
 
+	public void drPointXY(V v){
+		int px = getX(v.x);
+		int py = getY(v.y);
+		pt.drawLine(px, inversY(py), px, inversY(py));
+	}
+
+	public void drPointYZ(V v){
+		int px = getX(v.y);
+		int py = getY(v.z);
+		pt.drawLine(px, inversY(py), px, inversY(py));
+	}
+
+	public void drPointXZ(V v){
+		int px = getX(v.x);
+		int py = getY(v.z);
+		pt.drawLine(px, inversY(py), px, inversY(py));
+	}
+
+
 	public void drCircle(double ox, double oy, double r){
 		int oX = getX(ox);
 		int oY = getY(oy);
 		int R = getI(r);
-		pt.drawOval(oX-R, inversY(oY-R), R*2, R*2);
+		pt.drawOval(oX-R, oY-R, R*2, R*2);
 	}
 	
 	public void drOval(double ox, double oy, double a, double b){
@@ -374,11 +393,14 @@ class Drawer{
 //		test7();
 //		test7V2();
 
-//		test7V3();
 
-		test7V3();
+		
+//		test7V3();
 //		test7V3D();
 
+		test7V3DInverse();
+		
+		
 //		statisticA();
 		
 //		showFunction();
@@ -1343,11 +1365,11 @@ class Drawer{
 		double r = 1;
 		if(curve==null){
 			// prepare for  avegage :  find H by function
-//			double hFind = SegCurve.findAverageH(100, 1.5);
+			double hFind = SegCurve.findAverageH(100, 1.5);
 //			System.out.println("hFind="+hFind);
 			
 //			curve = new SegCurve(r, r*2, r*2*hFind, 1.5); // average
-//			curve = new SegCurve(r, r*2.08, r*2*hFind*1.3, 1.5); // stat with h find
+//			curve = new SegCurve(r, r*1.9, r*2*hFind*1.3, 1.5); // stat with h find
 			curve = new SegCurve(r, r*2.4, r*2.7, 1.5); // stat
 
 			
@@ -1682,6 +1704,146 @@ class Drawer{
 //		}
 		
 	}
+	
+	
+	public void test7V3DInverse(){
+		double r = 100;
+		boolean limitZ = false;
+		
+		if(curve==null){
+//			curve = new SegCurve(r, r*2, r*2, 1.5);
+//			curve.setRange(90, 200);
+
+			curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
+			curve.setRange(90, 48);
+//			curve = new SegCurve(r, r*2.4, r*2.7, 1/1.5);
+//			curve.setRange(40, 50);
+			curve.setCenter(new V(0, 0, 0)); // do not change
+//			curve.setHue(7, 100);
+			
+			int dH = 0;
+			curve.setHue(7, 100, 0+dH, 10+dH, 20+dH, 30+dH, 40+dH, 50+dH, 60+dH, 70+dH, 80+dH, 90+dH, 100+dH);
+//			curve.setHue(7, 100, 
+//					0+dH, 2+dH, 4+dH, 6+dH, 8+dH,
+//					10+dH, 12+dH, 14+dH, 16+dH, 18+dH,
+//					20+dH, 22+dH, 24+dH, 26+dH, 28+dH,
+//					30+dH, 32+dH, 34+dH, 36+dH, 38+dH,
+//					40+dH, 42+dH, 44+dH, 46+dH, 48+dH,
+//					50+dH, 52+dH, 54+dH, 56+dH, 58+dH,
+//					60+dH, 62+dH, 64+dH, 66+dH, 68+dH,
+//					70+dH, 72+dH, 74+dH, 76+dH, 78+dH,
+//					80+dH, 82+dH, 84+dH, 86+dH, 88+dH,
+//					90+dH, 92+dH, 94+dH, 96+dH, 98+dH,
+//					100
+//			);
+			
+//			int step = 4;
+//			Integer[] hues = new Integer[100/step+1];
+//			for(int i=0; i<hues.length; i++){
+//				hues[i] = step * i;
+//			}
+//			curve.setHue(7, 100, hues);
+			
+
+//			curve.initPArray_simple();
+			curve.initPArray();
+		}
+		
+		
+		int cellNumR = 50;
+		int cellr = 0;
+		int cellR = cellr * 2+1;
+		int cellBR = cellR * cellNumR;
+		
+		double scale = curve.l/cellBR;
+		V imgCenter = curve.getImgCenter();
+		
+		// test color for cells
+		Color[] cellColors = {Color.darkGray, Color.red, Color.green, Color.blue, Color.pink, Color.lightGray, Color.magenta, Color.orange};
+		
+
+		int a = 0;
+		int b = 50;
+		for(int i=a; i<=a; i++){
+		for(int j=b; j<=b; j++){
+//		for(int i=0; i<=cellNumR; i++){
+//			for(int j=0; j<=cellNumR; j++){
+				// a cell
+				V centerIJ = new V(i*cellR, 0, j*cellR);
+				if(centerIJ.abs()>cellBR){
+					continue;
+				}
+				
+				pt.setColor(cellColors[RDM.nextI(0, cellColors.length)]);
+				
+				for(int ic = -cellr; ic<=cellr; ic++){
+					for(int jc = -cellr; jc<=cellr; jc++){
+						// a pixel
+						V pImg = add(mult(add(centerIJ, new V(ic, 0, jc)), scale), imgCenter);
+						
+						for(double cvi=-curve.dv; cvi<=curve.dv; cvi+=4){
+							for(double cvj=-curve.dv; cvj<=curve.dv; cvj+=4){
+								// get f and seg
+								Double rXY = new Double(pow(cvi*cvi+cvj*cvj, 0.5));
+								if(rXY>curve.dv)continue;
+
+								int iXY = rXY.intValue();
+								L seg = curve.getPSeg(iXY);
+								if(seg==null)continue;
+
+								V f = new V(-seg.dir.y, seg.dir.x, seg.dir.z);
+								if(f.y<0){
+									f = new V(-f.x, -f.y, f.z );
+								}
+								
+								if(cvj!=0 || cvi!=0){
+									V rollTo = new V(cvi, 0, cvj).unit();
+									f = new V(f.x*rollTo.x, f.y, f.x*rollTo.z);
+									seg =new L(new V(seg.o.x*rollTo.x, seg.o.y, seg.o.x*rollTo.z), new V(seg.dir.x*rollTo.x, seg.o.y, seg.dir.x*rollTo.z));
+								}
+								
+								
+								// get in dir
+								V in = sub(seg.o, pImg);
+								
+
+								// of no cross // to change by using directely points in plat y0
+								double yPp = (-pImg.y)/(seg.o.y-pImg.y);
+								V crossY0 = add(pImg, mult(in, yPp));
+								if(sub(crossY0, curve.center).abs()>curve.r){
+									continue;
+								}
+								
+								// get out line
+								V out = trm(f, in, 1/curve.n);
+								if(out==null){
+									continue;
+								}
+
+								if(U.is0(cvi)){
+									System.out.print(".");
+									drLineXY(pImg, seg.o);
+									drLXY(new L(seg.o, out), 200);
+									drPointXY(seg.o);
+								}
+							}
+						}
+					}
+				}
+				
+				
+			}
+		}
+		
+		
+		pt.setColor(Color.black);
+		drPointXZ(curve.center);
+
+		
+		
+	}
+		
+	
 	
 	public void showTrm(){
 		double r = 200;
@@ -3332,6 +3494,10 @@ class SegCurve{
 	
 	public void setCenter(V center){
 		this.center = center;
+	}
+	
+	public V getImgCenter(){
+		return add(center, new V(0, -h, 0));
 	}
 	
 	public void initPArray_simple(){
