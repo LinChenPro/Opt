@@ -400,6 +400,7 @@ class Drawer{
 
 		test7V3DInverse();
 		
+//		testSegSurface();
 		
 //		statisticA();
 		
@@ -1707,6 +1708,8 @@ class Drawer{
 	
 	
 	public void test7V3DInverse(){
+		pt.setColor(Color.black);
+		pt.drawString("3D Inverse", 10, 10);
 		double r = 1;
 		boolean limitZ = false;
 		
@@ -1759,7 +1762,7 @@ class Drawer{
 		double colorsCountTotal = 0; 
 
 		int cellNumR = 50;
-		int cellr = 5;
+		int cellr = 3;
 		int cellR = cellr * 2+1;
 		int cellBR = cellR * cellNumR;
 		
@@ -1767,7 +1770,7 @@ class Drawer{
 		V imgCenter = curve.getImgCenter();
 		
 		// test color for cells
-		Color[] cellColors = {Color.red, Color.green, Color.blue, Color.pink};
+		Color[] cellColors = {Color.red, Color.green, Color.blue, Color.pink, Color.CYAN, Color.gray, Color.CYAN, Color.orange, Color.white};
 //		float hue = 0.005f;
 //		for(int i=0; i<cellColors.length; i++){
 //			cellColors[i] = new Color(cellColors[i].getRed()/255f, cellColors[i].getGreen()/255f, cellColors[i].getBlue()/255f, hue);
@@ -1777,6 +1780,7 @@ class Drawer{
 
 		int a = 10;
 		int b = 10;
+		int jump = 0;
 		int dab = 1;
 //		for(int i=0; i<=a; i+=dab){
 //		for(int j=0; j<=b; j+=dab){
@@ -1785,20 +1789,20 @@ class Drawer{
 			for(int j=0; j<=cellNumR; j+=dab){
 				// a cell
 				V centerIJ = new V(i*cellR, 0, j*cellR);
-				if(centerIJ.abs()>cellBR || i<j || i%3!=0 || j%3!=0){
+				if(centerIJ.abs()>cellBR || i<j || i%(jump+1)!=0 || j%(jump+1)!=0){
 					continue;
 				}
 				
-//				Color c = (cellColors[RDM.nextI(0, cellColors.length)]); // random
-				Color c = curve.getColor(centerIJ.abs()*scale, 1); // hue of curve
+				Color c = (cellColors[RDM.nextI(0, cellColors.length)]); // random
+//				Color c = curve.getColor(centerIJ.abs()*scale, 1); // hue of curve
 				
-				for(int ic = -cellr; ic<=cellr; ic++){
-					for(int jc = -cellr; jc<=cellr; jc++){
+				for(int ic = -cellr+1; ic<cellr; ic++){
+					for(int jc = -cellr+1; jc<cellr; jc++){
 						// a pixel
 						V pImg = add(mult(add(centerIJ, new V(ic, 0, jc)), scale), imgCenter);
 						
-						for(double cvi=-curve.dv; cvi<=curve.dv; cvi+=1){
-							for(double cvj=-curve.dv; cvj<=curve.dv; cvj+=1){
+						for(double cvi=-curve.dv; cvi<=curve.dv; cvi+=5){
+							for(double cvj=-curve.dv; cvj<=curve.dv; cvj+=5){
 								// get f and seg
 								Double rXY = new Double(pow(cvi*cvi+cvj*cvj, 0.5));
 								if(rXY>curve.dv)continue;
@@ -1886,6 +1890,205 @@ class Drawer{
 				V cij = colors[i][j];
 				if( cij!= null){
 					pt.setColor(new Color( U.toI(cij.x/maxC*255), U.toI(cij.y/maxC*255), U.toI(cij.z/maxC*255)));
+					drPoint(i-U.toI(viewSphereR), j-U.toI(viewSphereR));
+				}else{
+					pt.setColor(Color.black);
+					drPoint(i-U.toI(viewSphereR), j-U.toI(viewSphereR));
+				}
+			}
+		}
+
+		
+		pt.setColor(Color.gray);
+//		drCircle(curve.center.x, curve.center.y, curve.r);
+		drPointXZ(curve.center);
+
+		drX(0);
+		drY(0);
+		pt.setColor(new Color(0.5f, 0.5f, 0.5f, 0.2f));
+		for(int i=1; i<=6; i++){
+			drCircle(0, 0, viewSphereR*i/6);
+		}
+		
+
+		
+	}
+		
+	public static Drawer crtDrawer;
+	public void testSegSurface(){
+		crtDrawer = this;
+		pt.setColor(Color.black);
+		pt.drawString("seg surface", 10, 10);
+		double r = 1;
+		
+		if(curve==null){
+			double hFind = SegCurve.findAverageH(100, 1.5);
+			System.out.println("hFind="+hFind);
+			
+//			curve = new SegCurve(r, r*2, r*2*hFind, 1.5); // average
+//			curve = new SegCurve(r, r*1.9, r*2*hFind*1.3, 1.5); // stat with h find
+			curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
+
+
+			curve.setRange(90, 100);
+			curve.setCenter(new V(0, 0, 0)); // do not change
+
+			curve.setHue(7, 100);			
+			int dH = 0;
+//			curve.setHue(7, 100, 0+dH, 10+dH, 20+dH, 30+dH, 40+dH, 50+dH, 60+dH, 70+dH, 80+dH, 90+dH, 100+dH);
+//			curve.setHue(7, 100, 
+//					0+dH, 2+dH, 4+dH, 6+dH, 8+dH,
+//					10+dH, 12+dH, 14+dH, 16+dH, 18+dH,
+//					20+dH, 22+dH, 24+dH, 26+dH, 28+dH,
+//					30+dH, 32+dH, 34+dH, 36+dH, 38+dH,
+//					40+dH, 42+dH, 44+dH, 46+dH, 48+dH,
+//					50+dH, 52+dH, 54+dH, 56+dH, 58+dH,
+//					60+dH, 62+dH, 64+dH, 66+dH, 68+dH,
+//					70+dH, 72+dH, 74+dH, 76+dH, 78+dH,
+//					80+dH, 82+dH, 84+dH, 86+dH, 88+dH,
+//					90+dH, 92+dH, 94+dH, 96+dH, 98+dH,
+//					100
+//			);
+			
+//			int step = 4;
+//			Integer[] hues = new Integer[100/step+1];
+//			for(int i=0; i<hues.length; i++){
+//				hues[i] = step * i;
+//			}
+//			curve.setHue(7, 100, hues);
+			
+
+//			curve.initPArray_simple();
+			curve.initPArray();
+//			curve.initPArray_average();
+		}
+
+//		pt.setColor(Color.gray);
+//		for(int i=0; i<=curve.dv; i++){
+//			drPointXY(curve.getPSeg(i).o);
+//		}
+		
+		SegSurface surface = new SegSurface(curve, new V(0, 0, 0), V.AXIS_Y);
+		
+		double viewSphereR = 500;
+		
+		V[][] colors = new V[U.toI(viewSphereR*2)][U.toI(viewSphereR*2)];
+
+		int cellNumR = 50;
+		int cellr = 3;
+		int cellR = cellr * 2+1;
+		int cellBR = cellR * cellNumR;
+		
+		double scale = curve.l/cellBR;
+		double scaleR = curve.r/curve.dv;
+		V imgCenter = curve.getImgCenter();
+		
+		// test color for cells
+		Color[] cellColors = {Color.red, Color.green, Color.blue, Color.pink, Color.CYAN, Color.gray, Color.CYAN, Color.orange, Color.white};
+//		float hue = 0.005f;
+//		for(int i=0; i<cellColors.length; i++){
+//			cellColors[i] = new Color(cellColors[i].getRed()/255f, cellColors[i].getGreen()/255f, cellColors[i].getBlue()/255f, hue);
+//		}
+		
+		
+		int dab = 1;
+		int jump = 0;
+//		int a = 12;
+//		int b = 12;
+//		for(int i=a; i<=a; i+=dab){
+//		for(int j=b; j<=b; j+=dab){
+		
+		for(int i=0; i<=cellNumR; i+=dab){
+			System.out.println("i = " + i);
+			for(int j=0; j<=cellNumR; j+=dab){
+				// a cell
+				V centerIJ = new V(i*cellR, 0, j*cellR);
+				if(centerIJ.abs()>cellBR || i<j || i%(jump+1)!=0 || j%(jump+1)!=0){
+					continue;
+				}
+				
+				Color c = (cellColors[RDM.nextI(0, cellColors.length)]); // random
+//				Color c = curve.getColor(centerIJ.abs()*scale, 1); // hue of curve
+				
+				for(int ic = -cellr+1; ic<cellr; ic++){
+					for(int jc = -cellr+1; jc<cellr; jc++){
+						// a pixel
+						V pImg = add(mult(add(centerIJ, new V(ic, 0, jc)), scale), imgCenter);
+						
+						for(double cvi=-curve.dv; cvi<=curve.dv; cvi+=5){
+//							for(double cvj=0; cvj<=0; cvj+=1){
+							for(double cvj=-curve.dv; cvj<=curve.dv; cvj+=5){
+								// get f and seg
+								Double rXY = new Double(pow(cvi*cvi+cvj*cvj, 0.5));
+								if(rXY>curve.dv)continue;
+
+								
+								// get in dir
+								V in = sub(add(mult(new V(cvi, 0, cvj), scaleR), curve.getEndCenter()), pImg).unit();
+								L outLine = surface.out(new L(pImg, in), 1/curve.n);
+								V out = outLine==null? null : outLine.dir;		
+
+//								pt.setColor(Color.lightGray);
+//								drLXY(new L(pImg, in), 100);
+//								if(U.is0(cvj) && outLine!=null){
+//									pt.setColor(Color.gray);
+//									drLineXY(pImg, outLine.o);
+//									if(out!=null){
+//										drLXY(new L(outLine.o, out), 500);
+//									}
+//									pt.setColor(Color.red);
+//									drPointXY(outLine.o);
+//								}
+//								pt.setColor(Color.green);
+//								drPointXY(add(mult(new V(cvi, 0, cvj), scaleR), curve.getEndCenter()));
+
+								if(out==null){
+									continue;
+								}
+
+
+								
+								// get p on shpere
+								V pShp = add(curve.center, mult(out, viewSphereR)); 
+								V pXZ = U.spherePositionToPlat(1, viewSphereR, pShp);			
+
+								int xInt = max(0, min(U.toI(viewSphereR*2)-1,new Double(pXZ.x+U.toI(viewSphereR)).intValue()));
+								int zInt = max(0, min(U.toI(viewSphereR*2)-1,new Double(pXZ.z+U.toI(viewSphereR)).intValue()));
+								if(colors[xInt][zInt] == null){
+									colors[xInt][zInt] = new V(0,0,0);
+								}
+								colors[xInt][zInt] = add(colors[xInt][zInt], new V(c.getRed()/255d, c.getGreen()/255d, c.getBlue()/255d));
+							}
+						}
+					}
+				}
+				
+				
+			}
+		}
+		
+		
+		
+		double maxC=0;
+		double minC=Double.MAX_VALUE;
+		for(int i=0; i<U.toI(viewSphereR)*2; i++){
+			for(int j=0; j<U.toI(viewSphereR)*2; j++){
+				V cij = colors[i][j];
+				if( cij!= null){
+					maxC = max(maxC, max(cij.x, max(cij.y, cij.z)));
+					minC = min(minC, min(cij.x, min(cij.y, cij.z)));
+				}
+			}
+		}
+
+		for(int i=0; i<U.toI(viewSphereR)*2; i++){
+			for(int j=0; j<U.toI(viewSphereR)*2; j++){
+				V cij = colors[i][j];
+				if( cij!= null){
+					pt.setColor(new Color( U.toI(cij.x/maxC*255), U.toI(cij.y/maxC*255), U.toI(cij.z/maxC*255)));
+					drPoint(i-U.toI(viewSphereR), j-U.toI(viewSphereR));
+				}else{
+					pt.setColor(Color.black);
 					drPoint(i-U.toI(viewSphereR), j-U.toI(viewSphereR));
 				}
 			}
@@ -2831,6 +3034,10 @@ class U{
 		}
 		
 	}
+
+	public static double pow2(double d){
+		return d*d;
+	}
 	
 	public static int toI(double d){
 		return new Double(d).intValue();
@@ -2906,16 +3113,21 @@ class U{
 	}
 	
 	public static boolean is0(double d){
-		return abs(d)<0.000001;
+		return d==0 || abs(d)<0.00000001;
 	}
 	
 	public static double[] defun(double a, double b, double c){
+		if(is0(a) && is0(b)){
+			return null;
+		}else if(is0(a)){
+			return new double[]{-c/b};
+		}
 		double d = b*b-4*a*c;
 		if(d<0){
 			return null;
 		}else if(is0(d)){
 			return new double[]{-b/2/a};
-		}else{
+		}else {
 			double rd = pow(d, 0.5);
 			double r1 = (rd-b)/2/a;
 			double r2 = (-rd-b)/2/a;
@@ -2986,6 +3198,11 @@ class U{
 }
 
 class V{
+	static V AXIS_X = new V(1, 0, 0);
+	static V AXIS_Y = new V(0, 1, 0);
+	static V AXIS_Z = new V(0, 0, 1);
+
+	
 	double x;
 	double y;
 	double z;
@@ -3032,7 +3249,7 @@ class V{
 	public boolean equals(Object o){
 		if(o instanceof V){
 			V v = (V)o;
-			return v.x == x && v.y == y && v.z == z;
+			return U.is0(v.x-x) && U.is0(v.y-y) && U.is0(v.z-z);
 		}
 		
 		return false;
@@ -3044,6 +3261,18 @@ class V{
 		}
 		
 		return y/x;
+	}
+	
+	public V projXY(){
+		return new V(x, y, 0);
+	}
+	
+	public V projYZ(){
+		return new V(0, y, z);
+	}
+	
+	public V projXZ(){
+		return new V(x, 0, z);
 	}
 	
 	public String toString(){
@@ -3081,7 +3310,7 @@ class V{
 	public static V mult(V v1, V v2){
 		return mult(v1, v2.x, v2.y, v2.z);
 	}
-	
+
 	public static V multV(V v1, V v2){
 		return new V(v1.y*v2.z-v2.y*v1.z, v1.z*v2.x-v2.z*v1.x, v1.x*v2.y-v2.x*v1.y);
 	}
@@ -3094,10 +3323,26 @@ class V{
 		return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z;
 	}
 
+	public static double multD2(V v){
+		return multD(v, v);
+	}
+
 	public static double multDU(V v1, V v2){
 		return multD(v1.unit(), v2.unit());
 	}
 
+	public static V prodV(V v1, V v2){
+		return new V(
+				v1.y*v2.z - v1.z*v2.y,
+				v1.z*v2.x - v1.x*v2.z,
+				v1.x*v2.y - v1.y*v2.x
+		);
+	}
+	
+	public static V prodVU(V v1, V v2){
+		return prodV(v1.unit(), v2.unit());
+	}
+	
 	public static double mR(V v){
 		return pow(v.x*v.x + v.y*v.y + v.z*v.z, 0.5);
 	}
@@ -3138,6 +3383,22 @@ class V{
 		return roll(axis, v, U.toa(A));
 	}
 
+	public static double dist(V p1, V p2){
+		return sub(p1, p2).abs();
+	}
+
+	public static double dist(L l, V p){
+		return prodV(sub(p, l.o), l.dir.unit()).abs();
+	}
+	
+	public static double distFoot(L l, V p){
+		return multD(sub(p, l.o), l.dir.unit());
+	}
+	
+	public static double dist(L l1, L l2){
+		return Math.abs(multD(sub(l1.o, l2.o), prodV(l1.dir, l2.dir).unit()));
+	}
+	
 	public static V roll(V axis, V v, double a){
 		axis = axis.unit();
 		double s = U.s(a);
@@ -3376,6 +3637,222 @@ class Sph implements Surface{
 	}
 }
 
+class SegSurface implements Surface{
+	SegCurve curve;
+	V center;
+	V axis;
+
+	V rollAxis;
+	L cvCenterAxis;
+	double rolla;
+	
+	static V curveAxis = V.AXIS_Y;
+	
+	public SegSurface(SegCurve curve, V center, V axis) {
+		this.curve = curve;
+		this.center = center;
+		this.axis = axis;
+		
+		rollAxis = V.prodVU(axis, curveAxis).unit();
+		rolla = ac(V.multDU(axis, curveAxis));
+		cvCenterAxis = new L(curve.center, curveAxis);
+		
+	}
+
+	//use curve's axis and center
+	public L outCv(L in, double n) {
+		V crossP = findCvCross(in);
+		if(crossP==null){
+//			System.out.println("crossP == null");
+			return null;
+		}
+
+		V f = findCvF(crossP);
+		if(f==null){
+			return null;
+		}
+		
+		V out = trm(f, in.dir, n);
+
+		if(out!=null && out.y*in.dir.y<=0){
+			out = null;
+		}
+		
+		if(out!=null && out.y<0){
+			double distPlanEnd = sub(add(crossP, mult(out, (curve.getEndCenter().y-crossP.y)/out.y)), curve.getEndCenter()).absXZ();
+			if(distPlanEnd > abs(curve.getEndPoint().x)){
+				out = null;
+			}
+		}
+		
+		return new L(crossP, out);
+	}
+	
+	public V findCvCross(L in){
+		// min distance position
+		L inXZ = in.projXZ();
+		double absInXZ = inXZ.dir.absXZ();
+		Double yMin = null;
+		if(!U.is0(absInXZ)){
+			double footXZ = V.distFoot(inXZ, curve.center.projXZ());
+			yMin = in.o.y+inXZ.dir.y*footXZ/absInXZ;
+		}
+		
+		int i = 0;
+		int iBorder = curve.dv;
+		int di = 1;
+		if(in.dir.y>0){
+			i = curve.dv-1;
+			iBorder = -1;
+			di = -1;
+		}
+		
+		// find seg
+		Integer findI = null;
+		L segI0 = null;
+		L segI1 = null;
+		for(; di*i<di*iBorder; i+=di){
+			segI0 = curve.getPSeg(i);
+			segI1 = curve.getPSeg(i+1);
+			
+			// in.dir.y == 0
+			if(U.is0(in.dir.y)){
+				if(in.o.y<=segI0.o.y && in.o.y>=segI1.o.y){
+					findI = i;
+					break;
+				}else{
+					findI = null;
+					segI0 = null;
+					segI1 = null;
+					continue;
+				}
+			}
+			
+			double dist0 = V.dist(cvCenterAxis, add(in.o, mult(in.dir, (segI0.o.y-in.o.y)/in.dir.y)));
+			double dist1 = V.dist(cvCenterAxis, add(in.o, mult(in.dir, (segI1.o.y-in.o.y)/in.dir.y)));
+			double segX0 = abs(segI0.o.x -curve.center.x);
+			double segX1 = abs(segI1.o.x -curve.center.x);
+
+			if((dist0<segX0) != (dist1<=segX1)){
+				findI = i;
+				break;
+			}else if(dist0<segX0 && dist1<=segX1){
+				findI = null;
+				segI0 = null;
+				segI1 = null;
+				continue;
+			}else if((yMin<=segI0.o.y) != (yMin<=segI1.o.y)){
+				findI = i;
+				break;
+			}
+		}
+		
+		if(findI==null){
+			return null;
+		}
+		
+		double tg = segI0.dir.y/segI0.dir.x;
+		double yc = segI0.o.y+(curve.center.x-segI0.o.x)*tg;
+		V c = new V(curve.center.x, yc, curve.center.z);
+		
+		V cToO = sub(in.o, c);
+		
+		double A = U.pow2(tg) * V.multD2((in.dir.projXZ()))-U.pow2(in.dir.y);
+		double B = 2*( U.pow2(tg)*multD(cToO.projXZ(), in.dir.projXZ()) -in.dir.y*cToO.y );
+		double C = U.pow2(tg)* V.multD2(cToO.projXZ()) - U.pow2(cToO.y);
+		
+		double[] ls = U.defun(A, B, C);
+		if(ls==null){
+			return null;
+		}
+//		System.out.println("\n"+findI);
+		for(double l : ls){
+//			System.out.println("l:"+l);
+			if(l<0){
+				continue;
+			}
+			
+			V p = add(in.o, mult(in.dir, l));
+			if(p.y<=segI0.o.y && p.y>=segI1.o.y){
+				double xz = sub(p, curve.center).absXZ();
+//				if(xz>=abs(segI0.o.x) && (xz<=abs(segI1.o.x) || U.is0(xz-abs(segI1.o.x)))){
+					return p;
+//				}
+			}
+		}
+		
+		return null;
+	}
+	
+	public V findCvF(V p){
+		V cP = sub(p, curve.center);
+		int iXY = U.toI(cP.absXZ()/curve.r*curve.dv);
+		L seg = curve.getPSeg(iXY);
+		if(seg==null){
+			return null;
+		}
+
+		V f = new V(-seg.dir.y, seg.dir.x, seg.dir.z);
+		if(f.y<0){
+			f = V.N(f);
+		}
+		
+		if(!U.is0(cP.x) || !U.is0(cP.z)){
+			V rollTo = new V(cP.x, 0, cP.z).unit();
+			f = new V(f.x*rollTo.x, f.y, f.x*rollTo.z);
+		}
+
+		return f;
+		
+	}
+
+	public V toCurveAxis(V v){
+		if(v==null){
+			return null;
+		}
+		return V.roll(rollAxis, v, rolla);
+	}
+	
+	public V toSurfaceAxis(V v){
+		if(v==null){
+			return null;
+		}
+		return V.roll(rollAxis, v, -rolla);
+	}
+	
+	@Override
+	public L out(L in, double n) {
+		if(V.dist(in, curve.getEndCenter())>curve.getMaxDistToEC()){
+			return null;
+		}
+
+		in = new L(V.sub(in.o, center), in.dir);
+		boolean isCurveAxis = axis.equals(curveAxis);
+		
+		if(!isCurveAxis){
+			in = new L(toCurveAxis(in.o), toCurveAxis(in.dir));
+		}
+		
+		L out = outCv(in, n);
+		if(out==null){
+			return null;
+		}
+		
+		if(!isCurveAxis){
+			out = new L(toSurfaceAxis(out.o), toSurfaceAxis(out.dir));
+		}
+
+		return new L(V.add(out.o, center), out.dir);
+	}
+
+	@Override
+	public void show(Drawer drawer) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+}
+
 // z=0;
 abstract class PlView implements Surface{
 	V o;
@@ -3543,6 +4020,8 @@ class SegCurve{
 	Integer[] validLs = null;
 	
 	V center;
+
+	Double maxDistToEC = null;
 	
 	L[] pArray;
 	
@@ -3598,6 +4077,28 @@ class SegCurve{
 	
 	public V getImgCenter(){
 		return add(center, new V(0, -h, 0));
+	}
+	
+	public V getEndPoint(){
+		return getPSeg(dv).o;
+	}
+	
+	public V getEndCenter(){
+		return add(center, new V(0, getEndPoint().y ,0));
+	}
+	
+	public double getMaxDistToEC(){
+		if(maxDistToEC == null){
+			V p = getEndCenter();
+			double maxD = 0;
+			
+			for(int i=0; i<=dv; i++){
+				maxD = Math.max(V.dist(getPSeg(i).o, p), maxD);
+			}
+			maxDistToEC = maxD;
+		}
+		
+		return maxDistToEC;
 	}
 	
 	public void initPArray_simple(){
@@ -3838,9 +4339,6 @@ class SegCurve{
 		}
 	}
 
-	public V getEndPoint(){
-		return getPSeg(dv).o;
-	}
 	
 }
 
@@ -3860,6 +4358,20 @@ class L{
 	public static int CROSS_NO = 0;
 	public static int CROSS_BEFORE = 1;
 	public static int CROSS_AFTER = 2;
+	
+	public L projXY(){
+		return new L(o.projXY(), dir.projXY());
+	}
+	
+	public L projYZ(){
+		return new L(o.projYZ(), dir.projYZ());
+	}
+	
+	public L projXZ(){
+		return new L(o.projXZ(), dir.projXZ());
+	}
+
+	
 	public int cross(LSeg s){
 		if(s.c.equals(o)){
 			return CROSS_NO;
