@@ -1756,13 +1756,13 @@ class Drawer{
 		}
 		
 		
-		double viewSphereR = 500;
+		double viewSphereR = 800;
 		
 		V[][] colors = new V[U.toI(viewSphereR*2)][U.toI(viewSphereR*2)];
 		double colorsCountTotal = 0; 
 
 		int cellNumR = 50;
-		int cellr = 3;
+		int cellr = 4;
 		int cellR = cellr * 2+1;
 		int cellBR = cellR * cellNumR;
 		
@@ -1778,15 +1778,21 @@ class Drawer{
 		
 		
 
-		int a = 10;
-		int b = 10;
+		int a = 15;
+		int b = 15;
 		int jump = 0;
 		int dab = 1;
-//		for(int i=0; i<=a; i+=dab){
-//		for(int j=0; j<=b; j+=dab){
-		for(int i=0; i<=cellNumR; i+=dab){
+		
+		
+		int countLine = 0;
+		
+		for(int i=0; i<=a; i+=dab){
 			System.out.println("i = " + i);
-			for(int j=0; j<=cellNumR; j+=dab){
+			for(int j=0; j<=b; j+=dab){
+				
+//		for(int i=0; i<=cellNumR; i+=dab){
+//			System.out.println("i = " + i);
+//			for(int j=0; j<=cellNumR; j+=dab){
 				// a cell
 				V centerIJ = new V(i*cellR, 0, j*cellR);
 				if(centerIJ.abs()>cellBR || i<j || i%(jump+1)!=0 || j%(jump+1)!=0){
@@ -1796,17 +1802,19 @@ class Drawer{
 				Color c = (cellColors[RDM.nextI(0, cellColors.length)]); // random
 //				Color c = curve.getColor(centerIJ.abs()*scale, 1); // hue of curve
 				
-				for(int ic = -cellr+1; ic<cellr; ic++){
-					for(int jc = -cellr+1; jc<cellr; jc++){
+				int border = 0;
+				for(int ic = -cellr+border; ic<=cellr-border; ic++){
+					for(int jc = -cellr+border; jc<=cellr-border; jc++){
 						// a pixel
 						V pImg = add(mult(add(centerIJ, new V(ic, 0, jc)), scale), imgCenter);
 						
-						for(double cvi=-curve.dv; cvi<=curve.dv; cvi+=5){
-							for(double cvj=-curve.dv; cvj<=curve.dv; cvj+=5){
+						for(double cvi=-curve.dv; cvi<=curve.dv; cvi+=2){
+							for(double cvj=-curve.dv; cvj<=curve.dv; cvj+=2){
 								// get f and seg
 								Double rXY = new Double(pow(cvi*cvi+cvj*cvj, 0.5));
 								if(rXY>curve.dv)continue;
 
+								countLine++;
 								int iXY = rXY.intValue();
 								L seg = curve.getPSeg(iXY);
 								if(seg==null)continue;
@@ -1885,6 +1893,8 @@ class Drawer{
 			}
 		}
 
+		System.out.println("maxC = "+maxC);
+		System.out.println("countLine = " + countLine+", countTotale = " + colorsCountTotal);
 		for(int i=0; i<U.toI(viewSphereR)*2; i++){
 			for(int j=0; j<U.toI(viewSphereR)*2; j++){
 				V cij = colors[i][j];
@@ -1914,10 +1924,15 @@ class Drawer{
 		
 	}
 		
+	public static V[][] colors = null;
 	public static Drawer crtDrawer;
 	public void testSegSurface(){
 		crtDrawer = this;
+		
 		pt.setColor(Color.black);
+		fiRect(0, 0, w, h); 
+
+		pt.setColor(Color.white);
 		pt.drawString("seg surface", 10, 10);
 		double r = 1;
 		
@@ -1926,7 +1941,7 @@ class Drawer{
 			System.out.println("hFind="+hFind);
 			
 //			curve = new SegCurve(r, r*2, r*2*hFind, 1.5); // average
-//			curve = new SegCurve(r, r*1.9, r*2*hFind*1.3, 1.5); // stat with h find
+//			curve = new SegCurve(r*0.9, r*2, r*2*hFind, 1.5); // stat with h find
 			curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
 
 
@@ -1970,12 +1985,10 @@ class Drawer{
 		
 		SegSurface surface = new SegSurface(curve, new V(0, 0, 0), V.AXIS_Y);
 		
-		double viewSphereR = 500;
+		double viewSphereR = 800;
 		
-		V[][] colors = new V[U.toI(viewSphereR*2)][U.toI(viewSphereR*2)];
-
 		int cellNumR = 50;
-		int cellr = 3;
+		int cellr = 4;
 		int cellR = cellr * 2+1;
 		int cellBR = cellR * cellNumR;
 		
@@ -1993,79 +2006,101 @@ class Drawer{
 		
 		int dab = 1;
 		int jump = 0;
-//		int a = 12;
-//		int b = 12;
-//		for(int i=a; i<=a; i+=dab){
-//		for(int j=b; j<=b; j+=dab){
+		int a = 25;
+		int b = 3;
+
 		
-		for(int i=0; i<=cellNumR; i+=dab){
-			System.out.println("i = " + i);
-			for(int j=0; j<=cellNumR; j+=dab){
-				// a cell
-				V centerIJ = new V(i*cellR, 0, j*cellR);
-				if(centerIJ.abs()>cellBR || i<j || i%(jump+1)!=0 || j%(jump+1)!=0){
-					continue;
-				}
-				
-				Color c = (cellColors[RDM.nextI(0, cellColors.length)]); // random
-//				Color c = curve.getColor(centerIJ.abs()*scale, 1); // hue of curve
-				
-				for(int ic = -cellr+1; ic<cellr; ic++){
-					for(int jc = -cellr+1; jc<cellr; jc++){
-						// a pixel
-						V pImg = add(mult(add(centerIJ, new V(ic, 0, jc)), scale), imgCenter);
-						
-						for(double cvi=-curve.dv; cvi<=curve.dv; cvi+=5){
-//							for(double cvj=0; cvj<=0; cvj+=1){
-							for(double cvj=-curve.dv; cvj<=curve.dv; cvj+=5){
-								// get f and seg
-								Double rXY = new Double(pow(cvi*cvi+cvj*cvj, 0.5));
-								if(rXY>curve.dv)continue;
+		int countLine = 0;
+		int countValid = 0;
+		
+		if(colors == null){
+			colors = new V[U.toI(viewSphereR*2)][U.toI(viewSphereR*2)];
 
-								
-								// get in dir
-								V in = sub(add(mult(new V(cvi, 0, cvj), scaleR), curve.getEndCenter()), pImg).unit();
-								L outLine = surface.out(new L(pImg, in), 1/curve.n);
-								V out = outLine==null? null : outLine.dir;		
+			
+			for(int i=0; i<=a; i+=dab){
+				System.out.println("i = " + i);
+				for(int j=0; j<=b; j+=dab){
+			
+//			for(int i=0; i<=cellNumR; i+=dab){
+//				System.out.println("i = " + i);
+//				for(int j=0; j<=cellNumR; j+=dab){
+					// a cell
+					V centerIJ = new V(i*cellR, 0, j*cellR);
+					if(centerIJ.abs()>cellBR || i<j || i%(jump+1)!=0 || j%(jump+1)!=0){
+//						continue;
+					}
+					
+					Color c = (cellColors[RDM.nextI(0, cellColors.length)]); // random
+//					Color c = curve.getColor(centerIJ.abs()*scale, 1); // hue of curve
+					
+					int border = 1;
+					for(int ic = -cellr+border; ic<=cellr-border; ic++){
+						for(int jc = -cellr+border; jc<=cellr-border; jc++){
+							// a pixel
+							V pImg = add(mult(add(centerIJ, new V(ic, 0, jc)), scale), imgCenter);
+							
+							for(double cvi=-curve.dv; cvi<=curve.dv; cvi+=2){
+//								for(double cvj=0; cvj<=0; cvj+=1){
+								for(double cvj=-curve.dv; cvj<=curve.dv; cvj+=2){
+									// get f and seg
+									Double rXY = new Double(pow(cvi*cvi+cvj*cvj, 0.5));
+									if(rXY>curve.dv)continue;
 
-//								pt.setColor(Color.lightGray);
-//								drLXY(new L(pImg, in), 100);
-//								if(U.is0(cvj) && outLine!=null){
-//									pt.setColor(Color.gray);
-//									drLineXY(pImg, outLine.o);
-//									if(out!=null){
-//										drLXY(new L(outLine.o, out), 500);
+									countLine++;
+									
+									// get in dir
+									V in = sub(add(mult(new V(cvi, 0, cvj), scaleR*1), curve.getEndCenter()), pImg).unit();
+									L outLine = surface.out(new L(pImg, in), 1/curve.n);
+									V out = outLine==null? null : outLine.dir;		
+
+//									pt.setColor(Color.lightGray);
+//									drLXY(new L(pImg, in), 100);
+//									if(U.is0(cvj) && outLine!=null){
+//										pt.setColor(Color.gray);
+//										drLineXY(pImg, outLine.o);
+//										if(out!=null){
+//											drLXY(new L(outLine.o, out), 500);
+//										}
+//										pt.setColor(Color.red);
+//										drPointXY(outLine.o);
 //									}
-//									pt.setColor(Color.red);
-//									drPointXY(outLine.o);
-//								}
-//								pt.setColor(Color.green);
-//								drPointXY(add(mult(new V(cvi, 0, cvj), scaleR), curve.getEndCenter()));
+//									pt.setColor(Color.green);
+//									drPointXY(add(mult(new V(cvi, 0, cvj), scaleR), curve.getEndCenter()));
 
-								if(out==null){
-									continue;
+									if(out==null){
+										continue;
+									}
+
+
+									
+									// get p on shpere
+									V pShp = add(curve.center, mult(out, viewSphereR));
+									
+									V pXZ = U.spherePositionToPlat(1, viewSphereR, pShp);			
+									int xInt = max(0, min(U.toI(viewSphereR*2)-1,new Double(pXZ.x+U.toI(viewSphereR)).intValue()));
+
+									int zInt = max(0, min(U.toI(viewSphereR*2)-1,new Double(pXZ.z+U.toI(viewSphereR)).intValue()));
+									if(colors[xInt][zInt] == null){
+										colors[xInt][zInt] = new V(0,0,0);
+									}
+									countValid++;
+									colors[xInt][zInt] = add(colors[xInt][zInt], new V(c.getRed()/255d, c.getGreen()/255d, c.getBlue()/255d));
+//									colors[xInt][zInt] = add(colors[xInt][zInt], mult(new V(c.getRed()/255d, c.getGreen()/255d, c.getBlue()/255d), multD(in, V.AXIS_Y)));
+
 								}
-
-
-								
-								// get p on shpere
-								V pShp = add(curve.center, mult(out, viewSphereR)); 
-								V pXZ = U.spherePositionToPlat(1, viewSphereR, pShp);			
-
-								int xInt = max(0, min(U.toI(viewSphereR*2)-1,new Double(pXZ.x+U.toI(viewSphereR)).intValue()));
-								int zInt = max(0, min(U.toI(viewSphereR*2)-1,new Double(pXZ.z+U.toI(viewSphereR)).intValue()));
-								if(colors[xInt][zInt] == null){
-									colors[xInt][zInt] = new V(0,0,0);
-								}
-								colors[xInt][zInt] = add(colors[xInt][zInt], new V(c.getRed()/255d, c.getGreen()/255d, c.getBlue()/255d));
 							}
 						}
 					}
+					
+					
 				}
-				
-				
 			}
+
 		}
+
+
+		
+		
 		
 		
 		
@@ -2081,11 +2116,15 @@ class Drawer{
 			}
 		}
 
+		System.out.println("maxC = " + maxC);
+		System.out.println("countLine = " + countLine+", countTotale = " + countValid);
+		
 		for(int i=0; i<U.toI(viewSphereR)*2; i++){
 			for(int j=0; j<U.toI(viewSphereR)*2; j++){
 				V cij = colors[i][j];
 				if( cij!= null){
-					pt.setColor(new Color( U.toI(cij.x/maxC*255), U.toI(cij.y/maxC*255), U.toI(cij.z/maxC*255)));
+//					pt.setColor(new Color( U.toI(cij.x/maxC*255), U.toI(cij.y/maxC*255), U.toI(cij.z/maxC*255)));
+					pt.setColor(vToColor(cij, maxC));
 					drPoint(i-U.toI(viewSphereR), j-U.toI(viewSphereR));
 				}else{
 					pt.setColor(Color.black);
@@ -2110,7 +2149,14 @@ class Drawer{
 		
 	}
 		
-	
+	public Color vToColor(V vColor, double max){
+//		max = max(vColor.x, max(vColor.y, vColor.z));
+		
+		int R = U.toI(vColor.x/max *255);
+		int G = U.toI(vColor.y/max *255);
+		int B = U.toI(vColor.z/max *255);
+		return new Color(R, G, B);
+	}
 	
 	public void showTrm(){
 		double r = 200;
