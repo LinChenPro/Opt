@@ -359,6 +359,8 @@ class Drawer{
 		fun.show(this, pO, scale);
 	}
 	
+	public Color infoColor;
+	public String infoString;
 	
 	public void show(){
 //		Gra gra = new Gra(11, 20, 1);		
@@ -398,9 +400,9 @@ class Drawer{
 //		test7V3();
 //		test7V3D();
 
-		test7V3DInverse();
+//		test7V3DInverse();
 		
-//		testSegSurface();
+		testSegSurface();
 		
 //		statisticA();
 		
@@ -416,6 +418,11 @@ class Drawer{
 //		testSun();
 //		testImg();
 //		testFindR();
+		
+		pt.setColor(infoColor);
+		pt.drawString(infoString, 10, 10);
+
+		
 	}
 
 	static Color[] objColors = {Color.darkGray, Color.red, Color.green, Color.blue, Color.pink, Color.lightGray, Color.magenta, Color.orange};
@@ -1926,14 +1933,16 @@ class Drawer{
 		
 	public static V[][] colors = null;
 	public static Drawer crtDrawer;
+	
 	public void testSegSurface(){
+		infoString = "seg surface";
+		infoColor = Color.WHITE;
+		
 		crtDrawer = this;
 		
-		pt.setColor(Color.black);
+		pt.setColor(Color.lightGray);
 		fiRect(0, 0, w, h); 
 
-		pt.setColor(Color.white);
-		pt.drawString("seg surface", 10, 10);
 		double r = 1;
 		
 		if(curve==null){
@@ -1946,6 +1955,7 @@ class Drawer{
 
 
 			curve.setRange(90, 100);
+			infoString += "\n range="+curve.am;
 			curve.setCenter(new V(0, 0, 0)); // do not change
 
 			curve.setHue(7, 100);			
@@ -2006,18 +2016,21 @@ class Drawer{
 		
 		int dab = 1;
 		int jump = 0;
-		int a = 25;
-		int b = 3;
+		int a = 40;
+		int b = 1;
 
 		
 		int countLine = 0;
 		int countValid = 0;
 		
+		boolean showColorByDensity = true;
+		double colorPowerIndex = 1;
+
 		if(colors == null){
 			colors = new V[U.toI(viewSphereR*2)][U.toI(viewSphereR*2)];
 
 			
-			for(int i=0; i<=a; i+=dab){
+			for(int i=0; i<=a; i+=dab*4){
 				System.out.println("i = " + i);
 				for(int j=0; j<=b; j+=dab){
 			
@@ -2033,15 +2046,30 @@ class Drawer{
 					Color c = (cellColors[RDM.nextI(0, cellColors.length)]); // random
 //					Color c = curve.getColor(centerIJ.abs()*scale, 1); // hue of curve
 					
-					int border = 1;
-					for(int ic = -cellr+border; ic<=cellr-border; ic++){
-						for(int jc = -cellr+border; jc<=cellr-border; jc++){
+					int border = 0;
+					int maxIJ = cellr-border;
+					for(int ic = -maxIJ; ic<=maxIJ; ic++){
+						for(int jc = -maxIJ; jc<=maxIJ; jc++){
+
+							// center
+//							if(ic != 0 || jc !=0)continue;
+							
+							// i=j
+//							if(ic != jc)continue;
+							
+							// end
+//							if(abs(ic)!=maxIJ || abs(jc)!=maxIJ)continue;
+							
+							// border
+//							if(abs(ic)<maxIJ && abs(jc)<maxIJ)continue;
+
 							// a pixel
 							V pImg = add(mult(add(centerIJ, new V(ic, 0, jc)), scale), imgCenter);
 							
-							for(double cvi=-curve.dv; cvi<=curve.dv; cvi+=2){
+							for(double cvi=-curve.dv; cvi<=curve.dv; cvi+=1){
 //								for(double cvj=0; cvj<=0; cvj+=1){
-								for(double cvj=-curve.dv; cvj<=curve.dv; cvj+=2){
+								for(double cvj=-curve.dv; cvj<=curve.dv; cvj+=1){
+									
 									// get f and seg
 									Double rXY = new Double(pow(cvi*cvi+cvj*cvj, 0.5));
 									if(rXY>curve.dv)continue;
@@ -2124,7 +2152,11 @@ class Drawer{
 				V cij = colors[i][j];
 				if( cij!= null){
 //					pt.setColor(new Color( U.toI(cij.x/maxC*255), U.toI(cij.y/maxC*255), U.toI(cij.z/maxC*255)));
-					pt.setColor(vToColor(cij, maxC));
+					if(showColorByDensity){
+						pt.setColor(vToColor(cij, maxC, colorPowerIndex));
+					}else{
+						pt.setColor(vToColor2(cij, maxC));
+					}
 					drPoint(i-U.toI(viewSphereR), j-U.toI(viewSphereR));
 				}else{
 					pt.setColor(Color.black);
@@ -2134,7 +2166,7 @@ class Drawer{
 		}
 
 		
-		pt.setColor(Color.gray);
+		pt.setColor(new Color(0.8f, 0.3f, 0.3f, 0.2f));
 //		drCircle(curve.center.x, curve.center.y, curve.r);
 		drPointXZ(curve.center);
 
@@ -2146,11 +2178,27 @@ class Drawer{
 		}
 		
 
-		
+
 	}
 		
-	public Color vToColor(V vColor, double max){
+	public Color vToColor(V vColor, double max, double colorPowerIndex){
 //		max = max(vColor.x, max(vColor.y, vColor.z));
+		
+		if(colorPowerIndex == 1){
+			int R = U.toI(vColor.x/max *255);
+			int G = U.toI(vColor.y/max *255);
+			int B = U.toI(vColor.z/max *255);
+			return new Color(R, G, B);
+		}else{
+			int R = U.toI(pow(vColor.x/max, colorPowerIndex) *255);
+			int G = U.toI(pow(vColor.y/max, colorPowerIndex) *255);
+			int B = U.toI(pow(vColor.z/max, colorPowerIndex) *255);
+			return new Color(R, G, B);
+		}
+	}
+	
+	public Color vToColor2(V vColor, double max){
+		max = max(vColor.x, max(vColor.y, vColor.z));
 		
 		int R = U.toI(vColor.x/max *255);
 		int G = U.toI(vColor.y/max *255);
@@ -2234,8 +2282,8 @@ class Drawer{
 			double hFind = SegCurve.findAverageH(100, 1.5);
 			System.out.println(hFind);
 			
-			curve = new SegCurve(r*0.95, r*2, r*2*hFind*1.3, 1.5); // stat with h find
-//			curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
+//			curve = new SegCurve(r*0.95, r*2, r*2*hFind*1.3, 1.5); // stat with h find
+			curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
 			curve.setRange(90, accu);
 			curve.setCenter(new V(0, -0, 0));
 //			curve.setHue(7, 100);
