@@ -10,13 +10,13 @@ import static java.lang.Math.min;
 import static java.lang.Math.pow;
 import static java.lang.Math.sin;
 import static java.lang.Math.tan;
+import static my.tests.U.AS;
 import static my.tests.U.AT;
 import static my.tests.U.C;
 import static my.tests.U.S;
 import static my.tests.U.T;
 import static my.tests.U.ac;
 import static my.tests.U.as;
-import static my.tests.U.AS;
 import static my.tests.U.defun;
 import static my.tests.U.t;
 import static my.tests.U.toa;
@@ -44,7 +44,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
@@ -419,8 +421,13 @@ class Drawer{
 //		testImg();
 //		testFindR();
 		
-		pt.setColor(infoColor);
-		pt.drawString(infoString, 10, 10);
+		
+		if(infoColor!=null){
+			pt.setColor(infoColor);
+		}
+		if(infoString!=null){
+			pt.drawString(infoString, 10, 10);
+		}
 
 		
 	}
@@ -2017,7 +2024,7 @@ class Drawer{
 		int dab = 1;
 		int jump = 0;
 		int a = 40;
-		int b = 1;
+		int b = 0;
 
 		
 		int countLine = 0;
@@ -2026,8 +2033,12 @@ class Drawer{
 		boolean showColorByDensity = true;
 		double colorPowerIndex = 1;
 
+		DirectionCount directionCounts = new DirectionCount(U.toI(viewSphereR));
+		
+		
+//		[cellNumR*2+1][cellNumR*2+1]		
 		if(colors == null){
-			colors = new V[U.toI(viewSphereR*2)][U.toI(viewSphereR*2)];
+			colors = new V[U.toI(viewSphereR*2+1)][U.toI(viewSphereR*2+1)];
 
 			
 			for(int i=0; i<=a; i+=dab*4){
@@ -2043,7 +2054,8 @@ class Drawer{
 //						continue;
 					}
 					
-					Color c = (cellColors[RDM.nextI(0, cellColors.length)]); // random
+					Color c = Color.green; // fix
+//					Color c = (cellColors[RDM.nextI(0, cellColors.length)]); // random
 //					Color c = curve.getColor(centerIJ.abs()*scale, 1); // hue of curve
 					
 					int border = 0;
@@ -2105,12 +2117,15 @@ class Drawer{
 									V pShp = add(curve.center, mult(out, viewSphereR));
 									
 									V pXZ = U.spherePositionToPlat(1, viewSphereR, pShp);			
-									int xInt = max(0, min(U.toI(viewSphereR*2)-1,new Double(pXZ.x+U.toI(viewSphereR)).intValue()));
+									int xInt = max(0, min(U.toI(viewSphereR*2),U.toI45(pXZ.x)+U.toI(viewSphereR)));
 
-									int zInt = max(0, min(U.toI(viewSphereR*2)-1,new Double(pXZ.z+U.toI(viewSphereR)).intValue()));
+									int zInt = max(0, min(U.toI(viewSphereR*2),U.toI45(pXZ.z)+U.toI(viewSphereR)));
 									if(colors[xInt][zInt] == null){
 										colors[xInt][zInt] = new V(0,0,0);
 									}
+									
+									directionCounts.addValue(U.toI(pXZ.x), U.toI(pXZ.y), i, j, multD(in, V.AXIS_Y));
+									
 									countValid++;
 									colors[xInt][zInt] = add(colors[xInt][zInt], new V(c.getRed()/255d, c.getGreen()/255d, c.getBlue()/255d));
 //									colors[xInt][zInt] = add(colors[xInt][zInt], mult(new V(c.getRed()/255d, c.getGreen()/255d, c.getBlue()/255d), multD(in, V.AXIS_Y)));
@@ -2134,8 +2149,8 @@ class Drawer{
 		
 		double maxC=0;
 		double minC=Double.MAX_VALUE;
-		for(int i=0; i<U.toI(viewSphereR)*2; i++){
-			for(int j=0; j<U.toI(viewSphereR)*2; j++){
+		for(int i=0; i<=U.toI(viewSphereR)*2; i++){
+			for(int j=0; j<=U.toI(viewSphereR)*2; j++){
 				V cij = colors[i][j];
 				if( cij!= null){
 					maxC = max(maxC, max(cij.x, max(cij.y, cij.z)));
@@ -2147,8 +2162,8 @@ class Drawer{
 		System.out.println("maxC = " + maxC);
 		System.out.println("countLine = " + countLine+", countTotale = " + countValid);
 		
-		for(int i=0; i<U.toI(viewSphereR)*2; i++){
-			for(int j=0; j<U.toI(viewSphereR)*2; j++){
+		for(int i=0; i<=U.toI(viewSphereR)*2; i++){
+			for(int j=0; j<=U.toI(viewSphereR)*2; j++){
 				V cij = colors[i][j];
 				if( cij!= null){
 //					pt.setColor(new Color( U.toI(cij.x/maxC*255), U.toI(cij.y/maxC*255), U.toI(cij.z/maxC*255)));
@@ -3137,6 +3152,10 @@ class U{
 		return new Double(d).intValue();
 	}
 
+	public static int toI45(double d){
+		return new Double(d>0? d+0.5 : (d<0 ? d-0.5 : 0)).intValue();
+	}
+
 	public static double toA(double arc){
 		return arc*180d/PI;
 	}
@@ -3347,6 +3366,10 @@ class V{
 		}
 		
 		return false;
+	}
+	
+	public int hashCode(){
+		return toString().hashCode();
 	}
 	
 	public Double tgXY(){
@@ -4826,6 +4849,48 @@ class Gra{
 		area.intersect(area2);
 		return area;
 	}	
+}
+
+
+class DirectionCount{
+
+	PixelCounts[][] directionsPixels;
+	int directionR;
+	
+	public DirectionCount(int directionR){
+		this.directionR = directionR;
+		directionsPixels = new PixelCounts[directionR*2+1][directionR*2+1];
+	}
+
+	public void addValue(int dirX, int dirY, int pixelX, int pixelY, double value){
+		int dirI = dirX + directionR;
+		int dirJ = dirY + directionR;
+		
+		V pixel = new V(pixelX, pixelY, 0);
+		PixelCounts currentPixelCounts = directionsPixels[dirI][dirJ];
+		if(currentPixelCounts==null){
+			currentPixelCounts = new PixelCounts();
+			directionsPixels[dirI][dirJ] = currentPixelCounts;
+		}
+		
+		currentPixelCounts.addValue(pixel, value);
+	}
+}
+
+class PixelCounts{
+	Map<V, Double> pixelMap;
+	
+	public PixelCounts(){
+		pixelMap = new HashMap<V, Double>();
+	}
+
+	public void addValue(V pixel, double value) {
+		if(pixelMap.containsKey(pixel)){
+			pixelMap.put(pixel, pixelMap.get(pixel)+value);
+		}else{
+			pixelMap.put(pixel, value);
+		}
+	}
 }
 
 class Sun{
