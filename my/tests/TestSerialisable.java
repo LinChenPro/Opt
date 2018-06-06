@@ -9,7 +9,7 @@ import java.io.Serializable;
 public class TestSerialisable {
 	
 	public static void main(String[] args) throws FileNotFoundException, IOException, ClassNotFoundException {
-		String filePath = "C:/Users/lchen/doc_projets/SODEXO/objS";
+		String filePath = "C:/.....";
 		
 //		ObjS os = new ObjS();
 //		os.a = 100.123;

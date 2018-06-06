@@ -1939,6 +1939,9 @@ class Drawer{
 	}
 		
 	public static V[][] colors = null;
+	public static V[][] DIPs = null;
+	
+	// for test
 	public static Drawer crtDrawer;
 	
 	public void testSegSurface(){
@@ -1961,7 +1964,7 @@ class Drawer{
 			curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
 
 
-			curve.setRange(90, 100);
+			curve.setRange(90, 50);
 			infoString += "\n range="+curve.am;
 			curve.setCenter(new V(0, 0, 0)); // do not change
 
@@ -2005,7 +2008,7 @@ class Drawer{
 		double viewSphereR = 800;
 		
 		int cellNumR = 50;
-		int cellr = 4;
+		int cellr = 2;
 		int cellR = cellr * 2+1;
 		int cellBR = cellR * cellNumR;
 		
@@ -2023,8 +2026,8 @@ class Drawer{
 		
 		int dab = 1;
 		int jump = 0;
-		int a = 40;
-		int b = 0;
+		int a = cellNumR;
+		int b = cellNumR;
 
 		
 		int countLine = 0;
@@ -2033,7 +2036,7 @@ class Drawer{
 		boolean showColorByDensity = true;
 		double colorPowerIndex = 1;
 
-		DirectionCount directionCounts = new DirectionCount(U.toI(viewSphereR));
+		DirCounts dirCounts = new DirCounts(U.toI(viewSphereR));
 		
 		
 //		[cellNumR*2+1][cellNumR*2+1]		
@@ -2041,9 +2044,9 @@ class Drawer{
 			colors = new V[U.toI(viewSphereR*2+1)][U.toI(viewSphereR*2+1)];
 
 			
-			for(int i=0; i<=a; i+=dab*4){
+			for(int i=-a; i<=a; i+=dab){
 				System.out.println("i = " + i);
-				for(int j=0; j<=b; j+=dab){
+				for(int j=-b; j<=b; j+=dab){
 			
 //			for(int i=0; i<=cellNumR; i+=dab){
 //				System.out.println("i = " + i);
@@ -2078,9 +2081,9 @@ class Drawer{
 							// a pixel
 							V pImg = add(mult(add(centerIJ, new V(ic, 0, jc)), scale), imgCenter);
 							
-							for(double cvi=-curve.dv; cvi<=curve.dv; cvi+=1){
+							for(double cvi=-curve.dv; cvi<=curve.dv; cvi+=5){
 //								for(double cvj=0; cvj<=0; cvj+=1){
-								for(double cvj=-curve.dv; cvj<=curve.dv; cvj+=1){
+								for(double cvj=-curve.dv; cvj<=curve.dv; cvj+=5){
 									
 									// get f and seg
 									Double rXY = new Double(pow(cvi*cvi+cvj*cvj, 0.5));
@@ -2124,7 +2127,8 @@ class Drawer{
 										colors[xInt][zInt] = new V(0,0,0);
 									}
 									
-									directionCounts.addValue(U.toI(pXZ.x), U.toI(pXZ.y), i, j, multD(in, V.AXIS_Y));
+//									dirCounts.addValue(U.toI(pXZ.x), U.toI(pXZ.z), i, j, multD(in, V.AXIS_Y));
+									dirCounts.addValue(U.toI(pXZ.x), U.toI(pXZ.z), i, j, 1);
 									
 									countValid++;
 									colors[xInt][zInt] = add(colors[xInt][zInt], new V(c.getRed()/255d, c.getGreen()/255d, c.getBlue()/255d));
@@ -2161,26 +2165,79 @@ class Drawer{
 
 		System.out.println("maxC = " + maxC);
 		System.out.println("countLine = " + countLine+", countTotale = " + countValid);
+
 		
-		for(int i=0; i<=U.toI(viewSphereR)*2; i++){
-			for(int j=0; j<=U.toI(viewSphereR)*2; j++){
-				V cij = colors[i][j];
-				if( cij!= null){
-//					pt.setColor(new Color( U.toI(cij.x/maxC*255), U.toI(cij.y/maxC*255), U.toI(cij.z/maxC*255)));
-					if(showColorByDensity){
-						pt.setColor(vToColor(cij, maxC, colorPowerIndex));
-					}else{
-						pt.setColor(vToColor2(cij, maxC));
+		pt.setColor(Color.black);
+		pt.fillRect(0, 0, w, h);
+
+	
+
+		
+		// show area shp
+		
+		
+		if(DIPs==null){
+			DIPs = new V[dirCounts.dirR*2+1][dirCounts.dirR*2+1];
+			for(int i= -dirCounts.dirR; i<= dirCounts.dirR; i++){
+				for(int j= -dirCounts.dirR; j<= dirCounts.dirR; j++){
+					IPCounts ipCounts = dirCounts.getValue(i, j);
+					if(ipCounts != null && ipCounts.ipMap != null){
+						V maxV = null;
+						double maxCt = 0;
+						
+						for(Map.Entry<V, Double> entry : ipCounts.ipMap.entrySet()){
+							V v = entry.getKey();
+							Double d = entry.getValue();
+							if(d>maxCt){
+								maxCt = d;
+								maxV = v;
+							}
+						}
+
+						DIPs[i+dirCounts.dirR][j+dirCounts.dirR] = maxV;				
 					}
-					drPoint(i-U.toI(viewSphereR), j-U.toI(viewSphereR));
-				}else{
-					pt.setColor(Color.black);
-					drPoint(i-U.toI(viewSphereR), j-U.toI(viewSphereR));
 				}
 			}
 		}
-
 		
+		Map<V, Color> clForArea = new HashMap<V, Color>();
+		for(int i= -dirCounts.dirR; i<= dirCounts.dirR; i++){
+			for(int j= -dirCounts.dirR; j<= dirCounts.dirR; j++){
+				V maxV = DIPs[i+dirCounts.dirR][j+dirCounts.dirR];
+				if(maxV != null){
+					Color c = clForArea.get(maxV);
+					if(c==null){
+						c = (cellColors[RDM.nextI(0, cellColors.length)]); // random
+						clForArea.put(maxV, c);
+					}
+					
+					pt.setColor(c);
+					drPoint(i, j);
+				}	
+					
+			}
+		}
+		
+		
+		// show light sph
+//		for(int i=0; i<=U.toI(viewSphereR)*2; i++){
+//			for(int j=0; j<=U.toI(viewSphereR)*2; j++){
+//				V cij = colors[i][j];
+//				if( cij!= null){
+////					pt.setColor(new Color( U.toI(cij.x/maxC*255), U.toI(cij.y/maxC*255), U.toI(cij.z/maxC*255)));
+//					if(showColorByDensity){
+//						pt.setColor(vToColor(cij, maxC, colorPowerIndex));
+//					}else{
+//						pt.setColor(vToColor2(cij, maxC));
+//					}
+//					drPoint(i-U.toI(viewSphereR), j-U.toI(viewSphereR));
+//				}else{
+//				}
+//			}
+//		}
+		
+
+		// positions
 		pt.setColor(new Color(0.8f, 0.3f, 0.3f, 0.2f));
 //		drCircle(curve.center.x, curve.center.y, curve.r);
 		drPointXZ(curve.center);
@@ -2192,7 +2249,41 @@ class Drawer{
 			drCircle(0, 0, viewSphereR*i/6);
 		}
 		
-
+		
+		
+		
+		
+		
+		// count analyse
+//
+//		int maxDirCount = 0;
+//		
+//		int[] counts = new int[10];
+//		int countN = 0;
+//		int count0 = 0;
+//		for(int i= -dirCounts.dirR; i<= dirCounts.dirR; i++){
+//			for(int j= -dirCounts.dirR; j<= dirCounts.dirR; j++){
+//				IPCounts ipCounts = dirCounts.getValue(i, j);
+//				if(ipCounts != null && ipCounts.ipMap != null){
+//					int s = dirCounts.getValue(i, j).ipMap.size();
+//					if(s==0){
+//						count0++;
+//					}else{
+//						counts[U.toI(Math.log10(s))] ++;				
+//					}
+//					maxDirCount = max(maxDirCount, s);
+//				}else{
+//					countN++;
+//				}
+//			}
+//		}
+//		
+//		System.out.println("maxDirCount = "+maxDirCount);
+//		System.out.println("N : "+countN);
+//		System.out.println("0 : "+count0);
+//		for(int i=0; i<counts.length; i++){
+//			System.out.println(">"+pow(10, i)+" : "+counts[i]);
+//		}
 
 	}
 		
@@ -4852,43 +4943,67 @@ class Gra{
 }
 
 
-class DirectionCount{
+class DirCounts{
 
-	PixelCounts[][] directionsPixels;
-	int directionR;
+	IPCounts[][] dirsIPs;
+	int dirR;
 	
-	public DirectionCount(int directionR){
-		this.directionR = directionR;
-		directionsPixels = new PixelCounts[directionR*2+1][directionR*2+1];
+	public DirCounts(int dir){
+		this.dirR = dir;
+		dirsIPs = new IPCounts[dir*2+1][dir*2+1];
 	}
 
-	public void addValue(int dirX, int dirY, int pixelX, int pixelY, double value){
-		int dirI = dirX + directionR;
-		int dirJ = dirY + directionR;
+	public IPCounts getValue(int i, int j) {
+		return dirsIPs[i+dirR][j+dirR];
+	}
+
+	public IPCounts getValue(double x, double y) {
+		return getValue(U.toI45(x), U.toI45(y));
+	}
+
+	public Double getValue(int i, int j, int x, int y) {
+		IPCounts ipc = dirsIPs[i+dirR][j+dirR];
+		if(ipc==null || ipc.ipMap==null){
+			return null;
+		}
+		return ipc.ipMap.get(new V(x, y, 0));
+	}
+
+	public Double getValue(double i, double j, double x, double y) {
+		return getValue(U.toI45(i), U.toI45(j), U.toI45(x), U.toI45(y));
+	}
+
+	public void addValue(double dirX, double dirY, double ipX, double ipY, double value){
+		addValue(U.toI45(dirX), U.toI45(dirY), U.toI45(ipX), U.toI45(ipY), value);
+	}
+
+	public void addValue(int dirX, int dirY, int ipX, int ipY, double value){
+		int dirI = dirX + dirR;
+		int dirJ = dirY + dirR;
 		
-		V pixel = new V(pixelX, pixelY, 0);
-		PixelCounts currentPixelCounts = directionsPixels[dirI][dirJ];
-		if(currentPixelCounts==null){
-			currentPixelCounts = new PixelCounts();
-			directionsPixels[dirI][dirJ] = currentPixelCounts;
+		V ip = new V(ipX, ipY, 0);
+		IPCounts currentIPCounts = dirsIPs[dirI][dirJ];
+		if(currentIPCounts==null){
+			currentIPCounts = new IPCounts();
+			dirsIPs[dirI][dirJ] = currentIPCounts;
 		}
 		
-		currentPixelCounts.addValue(pixel, value);
+		currentIPCounts.addValue(ip, value);
 	}
 }
 
-class PixelCounts{
-	Map<V, Double> pixelMap;
+class IPCounts{
+	Map<V, Double> ipMap;
 	
-	public PixelCounts(){
-		pixelMap = new HashMap<V, Double>();
+	public IPCounts(){
+		ipMap = new HashMap<V, Double>();
 	}
 
-	public void addValue(V pixel, double value) {
-		if(pixelMap.containsKey(pixel)){
-			pixelMap.put(pixel, pixelMap.get(pixel)+value);
+	public void addValue(V ip, double value) {
+		if(ipMap.containsKey(ip)){
+			ipMap.put(ip, ipMap.get(ip)+value);
 		}else{
-			pixelMap.put(pixel, value);
+			ipMap.put(ip, value);
 		}
 	}
 }
