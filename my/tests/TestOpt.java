@@ -3110,6 +3110,22 @@ public class TestOpt {
 	static Canvas cvs;
 	public static void main(String[] args) {
 
+		//T ijk
+//		int ri=20000, rj = 20000;
+//		IJtoK ijk = new IJtoK(ri, rj);
+//		for(int i=-ri; i<=ri; i++){
+//			for(int j=-rj; j<=rj; j++){
+//				int k = ijk.getK(i, j);
+//				
+//				if(i!=ijk.getI(k) || j!=ijk.getJ(k)){
+//					System.out.println(i+","+j);
+//					System.out.println(ijk.getI(k)+","+ijk.getJ(k));
+//				}
+//			}
+//		}
+//		System.out.println("fin");
+//		if(true)return;
+
 //		System.out.println(AS(1/1.33));
 //		System.out.println(AS(1/1.4));
 //		System.out.println(AS(1/1.5));
@@ -5006,6 +5022,43 @@ class IPCounts{
 			ipMap.put(ip, value);
 		}
 	}
+}
+
+class IJtoK{
+	int ri;
+	int Ri;
+	
+	int rj;
+	int Rj;
+	
+	int dist;
+	
+	public IJtoK(int r){
+		this(r, r);
+	}
+
+	public IJtoK(int ri, int rj){
+		this.ri = ri;
+		this.rj = rj;
+
+		this.Ri = ri*2+1;
+		this.Rj = rj*2+1;
+
+		this.dist = ri*Rj + rj;
+	}
+	
+	public int getK(int i, int j){
+		return i*Rj +j;
+	}
+	
+	public int getI(int k){
+		return (k+dist)/Rj - ri;
+	}
+
+	public int getJ(int k){
+		return (k+dist)%Rj - rj;
+	}
+
 }
 
 class Sun{

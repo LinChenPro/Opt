@@ -9,7 +9,7 @@ import java.io.Serializable;
 public class TestSerialisable {
 	
 	public static void main(String[] args) throws FileNotFoundException, IOException, ClassNotFoundException {
-		String filePath = "C:/.....";
+//		String filePath = "C:/.....";
 		
 //		ObjS os = new ObjS();
 //		os.a = 100.123;
@@ -21,10 +21,13 @@ public class TestSerialisable {
 //		ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(filePath));
 //		output.writeObject(os);
 
-		ObjectInputStream input = new ObjectInputStream(new FileInputStream(filePath));
-		ObjS os = (ObjS)input.readObject();
+//		ObjectInputStream input = new ObjectInputStream(new FileInputStream(filePath));
+//		ObjS os = (ObjS)input.readObject();
+//		
+//		System.out.println(os);
 		
-		System.out.println(os);
+		String[] s= new String[2000*2000];
+		System.out.println(s.length);
 	}
 
 	public static class ObjSub implements Serializable{
