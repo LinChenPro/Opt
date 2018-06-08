@@ -2007,13 +2007,16 @@ class Drawer{
 		
 		double viewSphereR = 500;
 		
+		double rangeViewP = 70;
+		
 		int cellNumR = 50;
-		int cellr = 4;
+
+		int cellr = 3;
+		int cellBorder = 0;
+
 		int cellR = cellr * 2+1;
 		int cellBR = cellR * cellNumR;
 		
-		double scale = curve.l/cellBR;
-		double scaleR = curve.r/curve.dv;
 		V imgCenter = curve.getImgCenter();
 		
 		// test color for cells
@@ -2029,14 +2032,19 @@ class Drawer{
 		int a = 50;
 		int b = 50;
 
+		int lineDimr = 10;
 		
+//		double scale = curve.l*1.5/cellBR; // 1.5 for cell voisin 
+		double scale = curve.l/cellBR; // 1.5 for cell voisin 
+		double scaleR = curve.r/lineDimr;
+
 		int countLine = 0;
 		int countValid = 0;
 		
 		boolean showColorByDensity = true;
 		double colorPowerIndex = 1;
 
-		DirCounts dirCounts = new DirCounts(U.toI(viewSphereR), cellNumR);
+		DirCounts dirCounts = new DirCounts(U.toI(viewSphereR*1.2), cellNumR);
 		
 		
 //		[cellNumR*2+1][cellNumR*2+1]		
@@ -2101,13 +2109,13 @@ class Drawer{
 							// a pixel
 							V pImg = add(mult(add(centerIJ, new V(ic, 0, jc)), scale), imgCenter);
 							
-							for(double cvi=-curve.dv; cvi<=curve.dv; cvi+=5){
+							for(double cvi=-lineDimr; cvi<=lineDimr; cvi+=1){
 //								for(double cvj=0; cvj<=0; cvj+=1){
-								for(double cvj=-curve.dv; cvj<=curve.dv; cvj+=5){
+								for(double cvj=-lineDimr; cvj<=lineDimr; cvj+=1){
 									
 									// get f and seg
 									Double rXY = new Double(pow(cvi*cvi+cvj*cvj, 0.5));
-									if(rXY>curve.dv)continue;
+									if(rXY>lineDimr)continue;
 
 									countLine++;
 									
@@ -2137,9 +2145,13 @@ class Drawer{
 
 									
 									// get p on shpere
-									V pShp = add(curve.center, mult(out, viewSphereR));
+//									V pShp = add(curve.center, mult(out, viewSphereR));
+//									V pXZ = U.spherePositionToPlat(1, viewSphereR, pShp);			
+
+									// get h f dim=viewSphereR
+									double h = viewSphereR/T(rangeViewP);
+									V pXZ = add(curve.center, mult(out, h/out.y));
 									
-									V pXZ = U.spherePositionToPlat(1, viewSphereR, pShp);			
 									int xInt = max(0, min(U.toI(viewSphereR*2),U.toI45(pXZ.x)+U.toI(viewSphereR)));
 
 									int zInt = max(0, min(U.toI(viewSphereR*2),U.toI45(pXZ.z)+U.toI(viewSphereR)));
@@ -2203,8 +2215,9 @@ class Drawer{
 			for(int i= -dirCounts.dirR; i<= dirCounts.dirR; i++){
 				for(int j= -dirCounts.dirR; j<= dirCounts.dirR; j++){
 					Integer maxV = null;
-					double maxCt = 0;
-
+					double maxCt = 1;
+					double totalCount = 0;
+					double advance = 1;
 					int[][] dirOcts = Oct.getOctAll(i, j);
 					for(int octI=0; octI<8; octI++){
 						IPCounts ipCounts = dirCounts.getValue(dirOcts[octI][0], dirOcts[octI][1]);
@@ -2213,13 +2226,16 @@ class Drawer{
 							
 							for(Map.Entry<Integer, Double> entry : ipCounts.ipMap.entrySet()){
 								Integer ip = entry.getKey();
-								Double d = entry.getValue();
-								
-								if(d>maxCt){
-									int[] ipOct = Oct.toIDis(ipCounts.ijk.getI(ip), ipCounts.ijk.getJ(ip),-octI);
-									if(ipOct != null){
+								int[] ipOct = Oct.toIDis(ipCounts.ijk.getI(ip), ipCounts.ijk.getJ(ip),-octI);
+								if(ipOct != null){
+									Double d = entry.getValue();
+									totalCount += d;
+									if(d>maxCt){
+										advance = d/maxCt;
 										maxCt = d;
 										maxV = ipCounts.ijk.getK(ipOct[0], ipOct[1]);										
+									}else{
+										advance = min(advance, maxCt/d);
 									}
 								}
 							}
@@ -2227,7 +2243,12 @@ class Drawer{
 						}
 					}
 
-					DIPs[i+dirCounts.dirR][j+dirCounts.dirR] = maxV;				
+//					maxCt*3>=totalCount ||
+					if(maxV != null && ( advance>2 )){
+						DIPs[i+dirCounts.dirR][j+dirCounts.dirR] = maxV;				
+					}else{
+						DIPs[i+dirCounts.dirR][j+dirCounts.dirR] = null;				
+					}
 				}
 			}
 		}
@@ -2272,15 +2293,15 @@ class Drawer{
 		
 
 		// positions
-		pt.setColor(new Color(0.8f, 0.3f, 0.3f, 0.8f));
+		pt.setColor(new Color(1f, 0.3f, 0.3f, 0.8f));
 //		drCircle(curve.center.x, curve.center.y, curve.r);
 		drPointXZ(curve.center);
 
 		drX(0);
 		drY(0);
-		pt.setColor(new Color(0.5f, 0.5f, 0.5f, 0.8f));
-		for(int i=1; i<=6; i++){
-			drCircle(0, 0, viewSphereR*i/6);
+		pt.setColor(new Color(0.8f, 0.2f, 0.2f, 0.8f));
+		for(int i=1; i<=rangeViewP/10; i++){
+			drCircle(0, 0, viewSphereR/T(rangeViewP)*T(i*10));
 		}
 		
 		
@@ -5036,7 +5057,13 @@ class DirCounts{
 		int dirI = dirX + dirR;
 		int dirJ = dirY + dirR;
 		
-		IPCounts currentIPCounts = dirsIPs[dirI][dirJ];
+		IPCounts currentIPCounts = null;
+		try{
+			currentIPCounts = dirsIPs[dirI][dirJ];
+		}catch(ArrayIndexOutOfBoundsException e){
+			return;
+		}
+		
 		if(currentIPCounts==null){
 			currentIPCounts = new IPCounts(ijk);
 			dirsIPs[dirI][dirJ] = currentIPCounts;
