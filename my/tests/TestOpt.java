@@ -39,6 +39,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -399,12 +400,12 @@ class Drawer{
 
 
 		
-//		test7V3();
+		test7V3();
 //		test7V3D();
 
 //		test7V3DInverse();
 		
-		testSegSurface();
+//		testSegSurface();
 		
 //		statisticA();
 		
@@ -1724,63 +1725,30 @@ class Drawer{
 	public void test7V3DInverse(){
 		pt.setColor(Color.black);
 		pt.drawString("3D Inverse", 10, 10);
-		double r = 1;
+
 		boolean limitZ = false;
+		SegCurve curve = getTestCurve(false);
+		SegSurface surface = new SegSurface(curve, new V(0, 0, 0), V.AXIS_Y);
 		
-		if(curve==null){
-			double hFind = SegCurve.findAverageH(100, 1.5);
-			System.out.println("hFind="+hFind);
-			
-//			curve = new SegCurve(r, r*2, r*2*hFind, 1.5); // average
-//			curve = new SegCurve(r, r*1.9, r*2*hFind*1.3, 1.5); // stat with h find
-			curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
-
-
-			curve.setRange(90, 100);
-			curve.setCenter(new V(0, 0, 0)); // do not change
-
-			curve.setHue(7, 100);			
-			int dH = 0;
-//			curve.setHue(7, 100, 0+dH, 10+dH, 20+dH, 30+dH, 40+dH, 50+dH, 60+dH, 70+dH, 80+dH, 90+dH, 100+dH);
-//			curve.setHue(7, 100, 
-//					0+dH, 2+dH, 4+dH, 6+dH, 8+dH,
-//					10+dH, 12+dH, 14+dH, 16+dH, 18+dH,
-//					20+dH, 22+dH, 24+dH, 26+dH, 28+dH,
-//					30+dH, 32+dH, 34+dH, 36+dH, 38+dH,
-//					40+dH, 42+dH, 44+dH, 46+dH, 48+dH,
-//					50+dH, 52+dH, 54+dH, 56+dH, 58+dH,
-//					60+dH, 62+dH, 64+dH, 66+dH, 68+dH,
-//					70+dH, 72+dH, 74+dH, 76+dH, 78+dH,
-//					80+dH, 82+dH, 84+dH, 86+dH, 88+dH,
-//					90+dH, 92+dH, 94+dH, 96+dH, 98+dH,
-//					100
-//			);
-			
-//			int step = 4;
-//			Integer[] hues = new Integer[100/step+1];
-//			for(int i=0; i<hues.length; i++){
-//				hues[i] = step * i;
-//			}
-//			curve.setHue(7, 100, hues);
-			
-
-//			curve.initPArray_simple();
-			curve.initPArray();
-//			curve.initPArray_average();
-		}
+		double viewSphereR = 500;
+		
+		double rangeViewP = 70;
+		int lineDimr = 25;
 		
 		
-		double viewSphereR = 800;
+		int cellNumR = 50;
 		
 		V[][] colors = new V[U.toI(viewSphereR*2)][U.toI(viewSphereR*2)];
+		
+		
 		double colorsCountTotal = 0; 
 
-		int cellNumR = 50;
-		int cellr = 4;
+		int cellr = 3;
 		int cellR = cellr * 2+1;
 		int cellBR = cellR * cellNumR;
 		
 		double scale = curve.l/cellBR;
+		double scaleR = curve.r/lineDimr;
 		V imgCenter = curve.getImgCenter();
 		
 		// test color for cells
@@ -1821,47 +1789,72 @@ class Drawer{
 					for(int jc = -cellr+border; jc<=cellr-border; jc++){
 						// a pixel
 						V pImg = add(mult(add(centerIJ, new V(ic, 0, jc)), scale), imgCenter);
-						
-						for(double cvi=-curve.dv; cvi<=curve.dv; cvi+=2){
-							for(double cvj=-curve.dv; cvj<=curve.dv; cvj+=2){
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+						// use lineDimr
+						for(double cvi=-lineDimr; cvi<=lineDimr; cvi+=1){
+							for(double cvj=-lineDimr; cvj<=lineDimr; cvj+=1){
 								// get f and seg
 								Double rXY = new Double(pow(cvi*cvi+cvj*cvj, 0.5));
-								if(rXY>curve.dv)continue;
+								if(rXY>lineDimr)continue;
 
 								countLine++;
-								int iXY = rXY.intValue();
-								L seg = curve.getPSeg(iXY);
-								if(seg==null)continue;
-
-								V f = new V(-seg.dir.y, seg.dir.x, seg.dir.z);
-								if(f.y<0){
-									f = new V(-f.x, -f.y, f.z );
-								}
-								
-								if(cvj!=0 || cvi!=0){
-									V rollTo = new V(cvi, 0, cvj).unit();
-									f = new V(f.x*rollTo.x, f.y, f.x*rollTo.z);
-									seg =new L(new V(seg.o.x*rollTo.x, seg.o.y, seg.o.x*rollTo.z), new V(seg.dir.x*rollTo.x, seg.o.y, seg.dir.x*rollTo.z));
-								}
-								
 								
 								// get in dir
-								V in = sub(seg.o, pImg);
+								V in = sub(add(mult(new V(cvi, 0, cvj), scaleR*1), curve.getEndCenter()), pImg).unit();
+								L outLine = surface.out(new L(pImg, in), 1/curve.n);
+								V out = outLine==null? null : outLine.dir;		
+//////////////////////////////////////////////////////////////////////////////////////////////
+								
+								
+								
+//////////////////////////////////////////////////////////////////////////////////////////////
+						// use curve dv
+//						for(double cvi=-curve.dv; cvi<=curve.dv; cvi+=2){
+//							for(double cvj=-curve.dv; cvj<=curve.dv; cvj+=2){
+//								// get f and seg
+//								Double rXY = new Double(pow(cvi*cvi+cvj*cvj, 0.5));
+//								if(rXY>curve.dv)continue;
+//								countLine++;
+//
+//								int iXY = rXY.intValue();
+//								L seg = curve.getPSeg(iXY);
+//								if(seg==null)continue;
+//
+//								V f = new V(-seg.dir.y, seg.dir.x, seg.dir.z);
+//								if(f.y<0){
+//									f = new V(-f.x, -f.y, f.z );
+//								}
+//								
+//								if(cvj!=0 || cvi!=0){
+//									V rollTo = new V(cvi, 0, cvj).unit();
+//									f = new V(f.x*rollTo.x, f.y, f.x*rollTo.z);
+//									seg =new L(new V(seg.o.x*rollTo.x, seg.o.y, seg.o.x*rollTo.z), new V(seg.dir.x*rollTo.x, seg.o.y, seg.dir.x*rollTo.z));
+//								}
+//								
+//								
+//								// get in dir
+//								V in = sub(seg.o, pImg);
+//								
+//
+//								// of no cross // to change by using directely points in plat y0
+//								V end = curve.getEndPoint();
+//								double endR = sub(end, curve.center).absXZ();
+//								
+//								double yPp = (end.y-pImg.y)/(seg.o.y-pImg.y);
+//								V crossY0 = add(pImg, mult(in, yPp));
+//								if(sub(crossY0, curve.center).absXZ()>endR){
+//									continue;
+//								}
+////								drPointXZ(crossY0);
+//								// get out line
+//								V out = trm(f, in, 1/curve.n);
+//////////////////////////////////////////////////////////////////////////////////////////////
+								
 								
 
-								// of no cross // to change by using directely points in plat y0
-								V end = curve.getEndPoint();
-								double endR = sub(end, curve.center).absXZ();
 								
-								double yPp = (end.y-pImg.y)/(seg.o.y-pImg.y);
-								V crossY0 = add(pImg, mult(in, yPp));
-								if(sub(crossY0, curve.center).absXZ()>endR){
-									continue;
-								}
-//								drPointXZ(crossY0);
 								
-								// get out line
-								V out = trm(f, in, 1/curve.n);
 								if(out==null || out.y<0){
 									continue;
 								}
@@ -1874,9 +1867,14 @@ class Drawer{
 								
 								
 								// get p on shpere
-								V pShp = add(curve.center, mult(out, viewSphereR)); 
-								V pXZ = U.spherePositionToPlat(1, viewSphereR, pShp);			
+//								V pShp = add(curve.center, mult(out, viewSphereR)); 
+//								V pXZ = U.spherePositionToPlat(1, viewSphereR, pShp);			
 
+								// get h f dim=viewSphereR
+								double h = viewSphereR/T(rangeViewP);
+								V pXZ = add(curve.center, mult(out, h/out.y));
+
+								
 								int xInt = max(0, min(U.toI(viewSphereR*2)-1,new Double(pXZ.x+U.toI(viewSphereR)).intValue()));
 								int zInt = max(0, min(U.toI(viewSphereR*2)-1,new Double(pXZ.z+U.toI(viewSphereR)).intValue()));
 								if(colors[xInt][zInt] == null){
@@ -1944,18 +1942,17 @@ class Drawer{
 	// for test
 	public static Drawer crtDrawer;
 	
-	public void testSegSurface(){
-		infoString = "seg surface";
-		infoColor = Color.WHITE;
+	public SegCurve getTestCurve(boolean forceCreation){
+		String objName = "test Curve";
+		boolean needCreation = forceCreation;
+		if(needCreation==false){
+			curve = (SegCurve)ObjSaver.readObjWhenNeed(SegCurve.class, curve, objName);
+			needCreation = curve==null;
+		}
 		
-		crtDrawer = this;
-		
-		pt.setColor(Color.lightGray);
-		fiRect(0, 0, w, h); 
-
-		double r = 1;
-		
-		if(curve==null){
+		if(needCreation){
+			double r = 1;
+			
 			double hFind = SegCurve.findAverageH(100, 1.5);
 			System.out.println("hFind="+hFind);
 			
@@ -1996,7 +1993,25 @@ class Drawer{
 //			curve.initPArray_simple();
 			curve.initPArray();
 //			curve.initPArray_average();
+			
+			ObjSaver.saveObj(curve, objName);
+			
 		}
+		
+		return curve;
+		
+	}
+	
+	public void testSegSurface(){
+		infoString = "seg surface";
+		infoColor = Color.WHITE;
+		
+		crtDrawer = this;
+		
+		pt.setColor(Color.lightGray);
+		fiRect(0, 0, w, h); 
+
+		SegCurve curve = getTestCurve(false);
 
 //		pt.setColor(Color.gray);
 //		for(int i=0; i<=curve.dv; i++){
@@ -3164,7 +3179,8 @@ public class TestOpt {
 
 	static Canvas cvs;
 	public static void main(String[] args) {
-
+		ObjSaver.setFolderPath(args[0]);
+		
 		//T ijk
 //		int ri=20000, rj = 20000;
 //		IJtoK ijk = new IJtoK(ri, rj);
@@ -3454,12 +3470,15 @@ class U{
 	public static Double SD_B(double[][] datas, double v){
 		double N = 0;
 		double psum = 0;
+		int i=0;
 		for(double[] data : datas){
 			if(abs(data[0])<abs(v)){
 				N += data[1];
 			}
 			psum += data[1]/(1+abs(data[0]/abs(v)));
+//			psum += (i<datas.length/3?1 : 1) /(1+abs(data[0]/abs(v)));
 //			psum += data[1];
+			i++;
 		}
 		
 		if(is0(N)){
@@ -3472,7 +3491,9 @@ class U{
 
 }
 
-class V{
+class V implements Serializable{
+	private static final long serialVersionUID = "V".hashCode();
+
 	static V AXIS_X = new V(1, 0, 0);
 	static V AXIS_Y = new V(0, 1, 0);
 	static V AXIS_Z = new V(0, 0, 1);
@@ -4284,7 +4305,9 @@ class Ovl implements Surface{
 
 }
 
-class SegCurve{
+class SegCurve implements Serializable{
+	private static final long serialVersionUID = "SegCurve".hashCode();
+
 	double r = 0.5;
 	double l = r*2;
 	double h = r*1.9;
@@ -4621,7 +4644,9 @@ class SegCurve{
 	
 }
 
-class L{
+class L implements Serializable{
+	private static final long serialVersionUID = "L".hashCode();
+
 	V o;
 	V dir;
 	
