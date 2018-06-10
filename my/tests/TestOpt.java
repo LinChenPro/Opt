@@ -215,7 +215,7 @@ class Drawer{
 		int oX = getX(ox);
 		int oY = getY(oy);
 		int R = getI(r);
-		pt.drawOval(oX-R, oY-R, R*2, R*2);
+		pt.drawOval(oX-R, inversY(oY+R), R*2, R*2);
 	}
 	
 	public void drOval(double ox, double oy, double a, double b){
@@ -407,8 +407,12 @@ class Drawer{
 
 //		test7V3DInverse();
 		
-		testSegSurfaceCross();
+//		testSegSurfaceCross();
 		
+//		testSegSurfaceCrossZ();
+		
+		testSegSurfaceCrossZInverse();
+
 //		testSegSurface();
 		
 //		statisticA();
@@ -2192,6 +2196,351 @@ class Drawer{
 		
 	}
 	
+	public void testSegSurfaceCrossZ(){
+		System.out.println("begin");
+		
+		crtDrawer = this;
+		double r = 200;
+		SegCurve curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
+		curve.setRange(90, 100);
+		curve.setCenter(new V(0, 0, 0));
+		curve = getInitedCurve(curve, false);
+
+		SegSurface surface = new SegSurface(curve, new V(0, 100, 0),  V.AXIS_Z);
+		
+//		V drawAxis = V.AXIS_X;
+		V drawAxis = V.AXIS_Y;
+//		V drawAxis = V.AXIS_Z;
+		
+		Color[] segColors = {Color.black, Color.red};
+		
+		L segLeftP = surface.toSurfaceAxisPos(curve.getNSeg(0));
+		L segRightP = surface.toSurfaceAxisPos(curve.getPSeg(0));
+		
+		for(int i=1; i<=curve.dv; i++){
+			pt.setColor(segColors[i%2]);
+			L segLeft = surface.toSurfaceAxisPos(curve.getNSeg(i));
+			L segRight = surface.toSurfaceAxisPos(curve.getPSeg(i));
+			
+			if(drawAxis==V.AXIS_X){
+				drLineYZ(segLeft.o, segLeftP.o);
+				drLineYZ(segRight.o, segRightP.o);
+			}else if(drawAxis==V.AXIS_Y){
+				drLineXZ(segLeft.o, segLeftP.o);
+				drLineXZ(segRight.o, segRightP.o);
+			}else if(drawAxis==V.AXIS_Z){
+				drLineXY(segLeft.o, segLeftP.o);
+				drLineXY(segRight.o, segRightP.o);
+			}
+			
+			segLeftP = segLeft;
+			segRightP = segRight;
+		}
+		
+		V EC = surface.toSurfaceAxisPos(curve.getEndCenter());
+		V EP = surface.toSurfaceAxisPos(curve.getEndPoint());
+
+		Double hLO = EC.z*2;
+
+		pt.setColor(Color.lightGray);
+		drX(surface.center.x);
+		drY(surface.center.y);
+		drCircle(surface.center.x, surface.center.y, curve.r);
+		drY(hLO);
+
+		for(int c = 0; c<1; c++){
+			
+			segLeftP = null;
+			segRightP = null;		
+//			for(int i=0; i<3; i++){
+//			for(int i=0; i<curve.dv; i++){
+			for(int i=0; i<curve.dv; i+=10){
+				L segLeft = surface.toSurfaceAxisPos(curve.getNSeg(i));
+				L segRight = surface.toSurfaceAxisPos(curve.getPSeg(i));
+	
+				// get random xy on seg
+				double dx = RDM.nextD(0, curve.r/curve.dv);
+
+				// get int xy on seg
+//				double dx = 0;
+				
+				V vLeft = add(segLeft.o, mult(segLeft.dir, -dx/segLeft.dir.x));
+				V vRight = add(segRight.o, mult(segRight.dir, dx/segRight.dir.x));
+				
+				// get random pO
+//				V poL = add(surface.center, new V(RDM.nextD(-EP.x*2, EP.x*2), 0, hLO));
+//				V poR = add(surface.center, new V(RDM.nextD(-EP.x*2, EP.x*2), 0, hLO));
+
+				// get random pO from top
+				V poL = add(surface.center, new V(RDM.nextD(-EP.x*2, EP.x*2), 0, -hLO));
+				V poR = add(surface.center, new V(RDM.nextD(-EP.x*2, EP.x*2), 0, -hLO));
+
+				
+				// roll random 
+				vLeft = V.ROLL(surface.sfCenterAxis, vLeft, RDM.nextD(0, 360));
+				vRight = V.ROLL(surface.sfCenterAxis, vRight, RDM.nextD(0, 360));
+				poL = V.ROLL(surface.sfCenterAxis, poL, RDM.nextD(0, 360));
+				poR = V.ROLL(surface.sfCenterAxis, poR, RDM.nextD(0, 360));
+				
+
+				if(c==0){
+					pt.setColor(Color.green);
+					if(drawAxis==V.AXIS_X){
+						drLineYZ(vLeft, poL);
+						drLineYZ(vRight, poR);
+					}else if(drawAxis==V.AXIS_Y){
+						drLineXZ(vLeft, poL);
+						drLineXZ(vRight, poR);
+					}else if(drawAxis==V.AXIS_Z){
+						drLineXY(vLeft, poL);
+						drLineXY(vRight, poR);
+					}
+					
+				}
+				
+//				if(true)continue;
+				L inL = new L(poL, sub(vLeft, poL));
+				L inR = new L(poR, sub(vRight, poR));
+				
+//				inR = new L(new V(509.78010136766096,-254.45202682944546,-293.6146715834944), new V(-0.9482645240134459,0.3133431546521026,0.051092660238252124));
+//				poR = inR.o;
+
+				
+				V crossL = surface.findCvCrossReal(inL);
+				V crossR = surface.findCvCrossReal(inR);
+
+				// from bottom
+//				L outL = surface.out(inL, 1/curve.n);
+//				L outR = surface.out(inR, 1/curve.n);
+				
+				// from top
+				L outL = surface.out(inL, curve.n);
+				L outR = surface.out(inR, curve.n);
+				
+				//				V crossL = null;
+				
+//				System.out.println(crossL!=null && crossR!=null);
+				
+				
+				pt.setColor(Color.black);
+				if(outL!=null && outL.dir!=null){
+					if(drawAxis==V.AXIS_X){
+						drLYZ(outL, 300);
+					}else if(drawAxis==V.AXIS_Y){
+						drLXZ(outL, 300);
+					}else if(drawAxis==V.AXIS_Z){
+						drLXY(outL, 300);
+					}
+				}
+				if(outR!=null && outR.dir!=null){
+					if(drawAxis==V.AXIS_X){
+						drLYZ(outR, 300);
+					}else if(drawAxis==V.AXIS_Y){
+						drLXZ(outR, 300);
+					}else if(drawAxis==V.AXIS_Z){
+						drLXY(outR, 300);
+					}
+				}
+				
+				if(crossL!=null){
+					if(c==0){
+						pt.setColor(Color.red);
+						if(drawAxis==V.AXIS_X){
+							drLineYZ(poL, crossL);						
+						}else if(drawAxis==V.AXIS_Y){
+							drLineXZ(poL, crossL);						
+						}else if(drawAxis==V.AXIS_Z){
+							drLineXY(poL, crossL);						
+						}
+					}
+					double rInEndPL = sub(add(inL.o, mult(inL.dir, (EC.z-inL.o.z)/inL.dir.z)), EC).absXZ();
+					if(U.aAbsSmallb(rInEndPL, EP.x) && !U.is0(V.dist(crossL, vLeft))){
+//						System.out.println(i+": not same p as vLeft\n" + crossL+"\n"+vLeft);
+					}
+				}else{
+					double rInEndPL = sub(add(inL.o, mult(inL.dir, (EC.z-inL.o.z)/inL.dir.z)), EC).absXZ();
+					if(U.aAbsSmallb(rInEndPL, EP.x)){
+						pt.setColor(Color.blue);
+						if(drawAxis==V.AXIS_X){
+							drLineYZ(vLeft, poL);
+						}else if(drawAxis==V.AXIS_Y){
+							drLineXZ(vLeft, poL);
+						}else if(drawAxis==V.AXIS_Z){
+							drLineXY(vLeft, poL);
+						}
+						System.out.println(i+" l not outside line");
+					}
+
+					System.out.println(i+": not found for inL " + inL);
+				}
+				
+				if(crossR!=null){
+					if(c==0){
+						pt.setColor(Color.red);
+						if(drawAxis==V.AXIS_X){
+							drLineYZ(poR, crossR);
+						}else if(drawAxis==V.AXIS_Y){
+							drLineXZ(poR, crossR);
+						}else if(drawAxis==V.AXIS_Z){
+							drLineXY(poR, crossR);
+						}
+					}
+					
+					double rInEndPL = sub(add(inR.o, mult(inR.dir, (EC.z-inR.o.z)/inR.dir.z)), EC).absXZ();
+					if(U.aAbsSmallb(rInEndPL, EP.x) && !U.is0(V.dist(crossR, vRight))){
+//						System.out.println(i+": not same p as vRight \n" + crossR+"\n"+vRight);
+					}
+				}else{
+					double rInEndPL = sub(add(inR.o, mult(inR.dir, (EC.z-inR.o.z)/inR.dir.z)), EC).absXZ();
+					if(U.aAbsSmallb(rInEndPL, EP.x)){
+						pt.setColor(Color.blue);
+						if(drawAxis==V.AXIS_X){
+							drLineYZ(vRight, poR);			
+						}else if(drawAxis==V.AXIS_Y){
+							drLineXZ(vRight, poR);			
+						}else if(drawAxis==V.AXIS_Z){
+							drLineXY(vRight, poR);			
+						}
+						System.out.println(i+" r not outside line");
+					}
+					System.out.println(i+": not found for inR " + inR);
+				}
+				
+				
+				segLeftP = segLeft;
+				segRightP = segRight;
+				
+			}
+		}
+		
+		
+		System.out.println("end");
+		
+		
+		
+	}
+	
+	public void testSegSurfaceCrossZInverse(){
+		System.out.println("begin");
+		
+		crtDrawer = this;
+		double r = 200;
+		SegCurve curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
+		curve.setRange(90, 100);
+		curve.setCenter(new V(0, 0, 0));
+		curve = getInitedCurve(curve, false);
+
+		SegSurface surface = new SegSurface(curve, new V(0, 100, 0),  V.AXIS_Z);
+		
+//		V drawAxis = V.AXIS_X;
+		V drawAxis = V.AXIS_Y;
+//		V drawAxis = V.AXIS_Z;
+		
+		Color[] segColors = {Color.black, Color.red};
+		
+		L segLeftP = surface.toSurfaceAxisPos(curve.getNSeg(0));
+		L segRightP = surface.toSurfaceAxisPos(curve.getPSeg(0));
+		
+		for(int i=1; i<=curve.dv; i++){
+			pt.setColor(segColors[i%2]);
+			L segLeft = surface.toSurfaceAxisPos(curve.getNSeg(i));
+			L segRight = surface.toSurfaceAxisPos(curve.getPSeg(i));
+			
+			if(drawAxis==V.AXIS_X){
+				drLineYZ(segLeft.o, segLeftP.o);
+				drLineYZ(segRight.o, segRightP.o);
+			}else if(drawAxis==V.AXIS_Y){
+				drLineXZ(segLeft.o, segLeftP.o);
+				drLineXZ(segRight.o, segRightP.o);
+			}else if(drawAxis==V.AXIS_Z){
+				drLineXY(segLeft.o, segLeftP.o);
+				drLineXY(segRight.o, segRightP.o);
+			}
+			
+			segLeftP = segLeft;
+			segRightP = segRight;
+		}
+		
+		V EC = surface.toSurfaceAxisPos(curve.getEndCenter());
+		V EP = surface.toSurfaceAxisPos(curve.getEndPoint());
+
+		Double hLO = EC.z*2;
+
+		pt.setColor(Color.lightGray);
+		drX(surface.center.x);
+		drY(surface.center.y);
+		drCircle(surface.center.x, surface.center.y, curve.r);
+		drY(hLO);
+
+		for(int c = 0; c<1; c++){
+			
+			segLeftP = null;
+			segRightP = null;		
+			for(int i=0; i<10; i++){
+				// get random pO
+				V pTop = add(surface.center, new V(RDM.nextD(-EP.x*5, EP.x*5), 0, 10));
+				V pBottom = add(surface.center, new V(RDM.nextD(-EP.x*50, EP.x*50), 0, hLO/2));
+
+				// roll random 
+				pTop = V.ROLL(surface.sfCenterAxis, pTop, RDM.nextD(0, 360));
+				pBottom = V.ROLL(surface.sfCenterAxis, pBottom, RDM.nextD(0, 360));
+				
+
+				if(c==0){
+					pt.setColor(Color.green);
+					if(drawAxis==V.AXIS_X){
+						drLineYZ(pTop, pBottom);
+					}else if(drawAxis==V.AXIS_Y){
+						drLineXZ(pTop, pBottom);
+					}else if(drawAxis==V.AXIS_Z){
+						drLineXY(pTop, pBottom);
+					}
+					
+				}
+				
+//				if(true)continue;
+				L inL = new L(pTop, sub(pBottom, pTop));
+				
+				
+				V crossL = surface.findCvCrossReal(inL);
+
+				
+				L outL = surface.out(inL, curve.n);
+
+				pt.setColor(Color.black);
+				if(outL!=null && outL.dir!=null){
+					if(drawAxis==V.AXIS_X){
+						drLYZ(outL, 300);
+					}else if(drawAxis==V.AXIS_Y){
+						drLXZ(outL, 300);
+					}else if(drawAxis==V.AXIS_Z){
+						drLXY(outL, 300);
+					}
+				}
+
+				if(crossL!=null){
+					if(c==0){
+						pt.setColor(Color.red);
+						if(drawAxis==V.AXIS_X){
+							drLineYZ(pTop, crossL);						
+						}else if(drawAxis==V.AXIS_Y){
+							drLineXZ(pTop, crossL);						
+						}else if(drawAxis==V.AXIS_Z){
+							drLineXY(pTop, crossL);						
+						}
+					}
+				}
+				
+			}
+		}
+		
+		
+		System.out.println("end");
+		
+		
+		
+	}
+	
 	public void testSegSurface(){
 		infoString = "seg surface";
 		infoColor = Color.WHITE;
@@ -3931,10 +4280,6 @@ class V implements Serializable{
 		return pow(this.z*this.z+this.y*this.y, 0.5);
 	}
 
-	public static V ROLL(V axis, V v, double A){
-		return roll(axis, v, U.toa(A));
-	}
-
 	public static double dist(V p1, V p2){
 		return sub(p1, p2).abs();
 	}
@@ -3950,8 +4295,24 @@ class V implements Serializable{
 	public static double dist(L l1, L l2){
 		return Math.abs(multD(sub(l1.o, l2.o), prodV(l1.dir, l2.dir).unit()));
 	}
-	
+
+	public static V ROLL(L axis, V v, double A){
+		return roll(axis, v, U.toa(A));
+	}
+
+	public static V roll(L axis, V v, double a){
+		return add(axis.o, roll(axis.dir, sub(v, axis.o), a));
+	}
+
+	public static V ROLL(V axis, V v, double A){
+		return roll(axis, v, U.toa(A));
+	}
+
 	public static V roll(V axis, V v, double a){
+		if(v==null){
+			return null;
+		}
+		
 		axis = axis.unit();
 		double s = U.s(a);
 		double c = U.c(a);
@@ -3973,6 +4334,24 @@ class V implements Serializable{
 		
 		return new V(multD(matrix[0], v), multD(matrix[1], v), multD(matrix[2], v));		
 	}
+	
+	public static L ROLL(V axis, L l, double A){
+		return roll(axis, l, U.toa(A));
+	}
+
+	public static L roll(V axis, L l, double a) {
+		return new L(roll(axis, l.o, a), roll(axis, l.dir, a));
+	}
+
+	public static L ROLL(L axis, L l, double A){
+		return roll(axis, l, U.toa(A));
+	}
+
+	public static L roll(L axis, L l, double toa) {
+		return new L(roll(axis, l.o, toa), roll(axis.dir, l.dir, toa));
+	}
+
+
 
 }
 
@@ -4196,6 +4575,7 @@ class SegSurface implements Surface{
 
 	V rollAxis;
 	L cvCenterAxis;
+	L sfCenterAxis;
 	double rolla;
 	
 	static V curveAxis = V.AXIS_Y;
@@ -4208,6 +4588,7 @@ class SegSurface implements Surface{
 		rollAxis = V.prodVU(axis, curveAxis).unit();
 		rolla = ac(V.multDU(axis, curveAxis));
 		cvCenterAxis = new L(curve.center, curveAxis);
+		sfCenterAxis = new L(center, axis);
 		
 	}
 
@@ -4215,12 +4596,15 @@ class SegSurface implements Surface{
 	public L outCv(L in, double n) {
 		V crossP = findCvCross(in);
 		if(crossP==null){
-//			System.out.println("crossP == null");
 			return null;
 		}
 
 		V f = findCvF(crossP);
 		if(f==null){
+			return null;
+		}
+		
+		if( (in.dir.y<0 && V.a(in.dir, f)<PI/2) || (in.dir.y>=0 && V.a(in.dir, f)>PI/2) ){
 			return null;
 		}
 		
@@ -4239,17 +4623,12 @@ class SegSurface implements Surface{
 		
 		return new L(crossP, out);
 	}
-	
+
+	public V findCvCrossReal(L in){
+		return toSurfaceAxisPos(findCvCross(toCurveAxisPos(in)));
+	}
+
 	public V findCvCross(L in){
-		// min distance position
-		L inXZ = in.projXZ();
-		double absInXZ = inXZ.dir.absXZ();
-		Double yMin = null;
-		if(!U.is0(absInXZ)){
-			double footXZ = V.distFoot(inXZ, curve.center.projXZ());
-			yMin = in.o.y+in.dir.y*footXZ/absInXZ;
-		}
-		
 		int i = 0;
 		int iBorder = curve.dv;
 		int di = 1;
@@ -4297,7 +4676,9 @@ class SegSurface implements Surface{
 				segI1 = null;
 				continue;
 			}else {
-//				if(U.aInBC(yMin, segI0.o.y, segI1.o.y)){
+				if(false){
+					continue;
+				}
 				
 				if(segI0.dir.y!=0){
 					V segI00 = add(segI0.o, mult(segI0.dir, -curve.r/curve.dv/segI0.dir.x));
@@ -4406,29 +4787,80 @@ class SegSurface implements Surface{
 		return V.roll(rollAxis, v, -rolla);
 	}
 	
+	public L toCurveAxis(L l){
+		if(l==null){
+			return null;
+		}
+		return V.roll(rollAxis, l, rolla);
+	}
+	
+	public L toSurfaceAxis(L l){
+		if(l==null){
+			return null;
+		}
+		return V.roll(rollAxis, l, -rolla);
+	}
+
+	public V toSurfaceAxisPos(V v){
+		if(v==null){
+			return null;
+		}
+		return add(sfCenterAxis.o, toSurfaceAxis(v));
+	}
+	
+	public V toCurveAxisPos(V v){
+		if(v==null){
+			return null;
+		}
+		return V.roll(rollAxis, sub(v, sfCenterAxis.o), rolla);
+	}
+
+	public L toSurfaceAxisPos(L l){
+		if(l==null){
+			return null;
+		}
+		L l2 = V.roll(rollAxis, l, -rolla);
+		l2.o = add(l2.o, sfCenterAxis.o);
+		return l2;
+	}
+
+	public L toCurveAxisPos(L l){
+		if(l==null){
+			return null;
+		}
+		l = new L(sub(l.o, sfCenterAxis.o), l.dir);
+		return V.roll(rollAxis, l, rolla);
+	}
+	
+
+	
 	@Override
 	public L out(L in, double n) {
+		in = toCurveAxisPos(in);
+		
 		if(V.dist(in, curve.getEndCenter())>curve.getMaxDistToEC()){
 			return null;
 		}
 
-		in = new L(V.sub(in.o, center), in.dir);
-		boolean isCurveAxis = axis.equals(curveAxis);
-		
-		if(!isCurveAxis){
-			in = new L(toCurveAxis(in.o), toCurveAxis(in.dir));
-		}
+//		in = new L(V.sub(in.o, center), in.dir);
+//		boolean isCurveAxis = axis.equals(curveAxis);
+//		
+//		if(!isCurveAxis){
+//			in = new L(toCurveAxis(in.o), toCurveAxis(in.dir));
+//		}
 		
 		L out = outCv(in, n);
 		if(out==null){
 			return null;
 		}
 		
-		if(!isCurveAxis){
-			out = new L(toSurfaceAxis(out.o), toSurfaceAxis(out.dir));
-		}
-
-		return new L(V.add(out.o, center), out.dir);
+//		if(!isCurveAxis){
+//			out = new L(toSurfaceAxis(out.o), toSurfaceAxis(out.dir));
+//		}
+//
+//		return new L(V.add(out.o, center), out.dir);
+		
+		return toSurfaceAxisPos(out);
 	}
 
 	@Override
