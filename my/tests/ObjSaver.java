@@ -20,7 +20,7 @@ public class ObjSaver<T>{
 	}
 	
 	private static String getFileName(String className, String name){
-		return className+"_"+name.replaceAll("\\s+", "_")+".obj";
+		return className+"_"+name.replaceAll("\\s+", "_").toLowerCase()+".obj";
 	}
 	
 	public static <E> E readObj(E obj, String name){
