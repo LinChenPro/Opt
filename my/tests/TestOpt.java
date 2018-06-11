@@ -411,9 +411,9 @@ class Drawer{
 		
 //		testSegSurfaceCrossZ();
 		
-		testSegSurfaceCrossZInverse();
+//		testSegSurfaceCrossZInverse();
 
-//		testSegSurface();
+		testSegSurface();
 		
 //		statisticA();
 		
@@ -2005,7 +2005,7 @@ class Drawer{
 			curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
 
 
-			curve.setRange(90, 50);
+			curve.setRange(90, 200);
 			infoString += "\n range="+curve.am;
 			curve.setCenter(new V(0, 0, 0)); // do not change
 
@@ -2478,8 +2478,8 @@ class Drawer{
 			segRightP = null;		
 			for(int i=0; i<10; i++){
 				// get random pO
-				V pTop = add(surface.center, new V(RDM.nextD(-EP.x*5, EP.x*5), 0, 10));
-				V pBottom = add(surface.center, new V(RDM.nextD(-EP.x*50, EP.x*50), 0, hLO/2));
+				V pTop = add(surface.center, new V(RDM.nextD(-EP.x*2, EP.x*2), 0, -hLO));
+				V pBottom = add(surface.center, new V(RDM.nextD(-EP.x*2, EP.x*2), 0, hLO));
 
 				// roll random 
 				pTop = V.ROLL(surface.sfCenterAxis, pTop, RDM.nextD(0, 360));
@@ -2583,8 +2583,8 @@ class Drawer{
 		
 		int dab = 1;
 		int jump = 0;
-		int a = 50;
-		int b = 50;
+		int a = 20;
+		int b = 20;
 
 		int lineDimr = 10;
 		
@@ -2675,7 +2675,8 @@ class Drawer{
 									
 									// get in dir
 									V in = sub(add(mult(new V(cvi, 0, cvj), scaleR*1), curve.getEndCenter()), pImg).unit();
-									L outLine = surface.out(new L(pImg, in), 1/curve.n);
+//									L outLine = surface.out(new L(pImg, in), 1/curve.n);
+									L outLine = surface.outFor0(new L(pImg, in), 1/curve.n);
 									V out = outLine==null? null : outLine.dir;		
 
 //									pt.setColor(Color.lightGray);
@@ -4134,6 +4135,9 @@ class V implements Serializable{
 
 	public V unit(){
 		double r = mR(this);
+		if(r==0){
+			return null;
+		}
 		return new V(x/r, y/r, z/r);
 	}
 	
@@ -4311,6 +4315,10 @@ class V implements Serializable{
 	public static V roll(V axis, V v, double a){
 		if(v==null){
 			return null;
+		}
+		
+		if(axis==null){
+			return v;
 		}
 		
 		axis = axis.unit();
@@ -4838,29 +4846,25 @@ class SegSurface implements Surface{
 	public L out(L in, double n) {
 		in = toCurveAxisPos(in);
 		
+		L out = outFor0(in, n);
+		if(out==null){
+			return null;
+		}
+		
+		return toSurfaceAxisPos(out);
+	}
+	
+	public L outFor0(L in, double n) {
 		if(V.dist(in, curve.getEndCenter())>curve.getMaxDistToEC()){
 			return null;
 		}
 
-//		in = new L(V.sub(in.o, center), in.dir);
-//		boolean isCurveAxis = axis.equals(curveAxis);
-//		
-//		if(!isCurveAxis){
-//			in = new L(toCurveAxis(in.o), toCurveAxis(in.dir));
-//		}
-		
 		L out = outCv(in, n);
 		if(out==null){
 			return null;
 		}
 		
-//		if(!isCurveAxis){
-//			out = new L(toSurfaceAxis(out.o), toSurfaceAxis(out.dir));
-//		}
-//
-//		return new L(V.add(out.o, center), out.dir);
-		
-		return toSurfaceAxisPos(out);
+		return out;
 	}
 
 	@Override
