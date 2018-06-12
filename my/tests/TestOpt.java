@@ -223,7 +223,7 @@ class Drawer{
 		int oY = getY(oy);
 		int A = getI(a);
 		int B = getI(b);
-		pt.drawOval(oX-A, inversY(oY-B), A*2, B*2);
+		pt.drawOval(oX-A, inversY(oY+B), A*2, B*2);
 	}
 	
 	public void drRect(double ox, double oy, double width, double height){
@@ -305,6 +305,34 @@ class Drawer{
 		drLine(-100*w, y, 100*w, y);
 	}
 
+	// pp
+	public V getVPP(V v){
+//		return new V(v.x+v.y/4*Math.sqrt(2), 0, v.z+v.y/4*Math.sqrt(2));
+		return new V(v.x, 0, v.z+v.y/4*Math.sqrt(2));
+	}
+	
+	public void ppPoint(V v){
+		drPointXZ(getVPP(v));
+	}
+	
+	public void ppLine(V v1, V v2){
+		drLineXZ(getVPP(v1), getVPP(v2));
+	}
+
+	public void ppLine(L l, double length){
+		ppLine(l.o, add(l.o, mult(l.dir, length)));
+	}
+	
+	public void ppCicleZ(L ax, V r){
+		for(double a = 0; a<360; a++){
+			V vi = V.ROLL(ax, r, a);
+			ppPoint(vi);
+		}
+	}
+	
+	
+	
+	
 	public void drFunXY(FunReal fun, V pO, V scale, double minX, double maxX, double dx){
 		pt.setColor(new Color(0.5f,0.5f,0.5f,0.5f));
 		drX(pO.x);
@@ -405,15 +433,14 @@ class Drawer{
 //		test7V3();
 //		test7V3D();
 
-//		test7V3DInverse();
+		test7V3DInverse();
 		
 //		testSegSurfaceCross();
-		
 //		testSegSurfaceCrossZ();
-		
 //		testSegSurfaceCrossZInverse();
-
-		testSegSurface();
+//		testSegSurfaceCrossZPP();
+		
+//		testSegSurface();
 		
 //		statisticA();
 		
@@ -1987,7 +2014,7 @@ class Drawer{
 	}
 	
 	public SegCurve getTestCurve(boolean forceCreation){
-		String objName = "test Curve 200";
+		String objName = "test Curve 800";
 		boolean needCreation = forceCreation;
 		if(needCreation==false){
 			curve = (SegCurve)ObjSaver.readObjWhenNeed(SegCurve.class, curve, objName);
@@ -2005,7 +2032,7 @@ class Drawer{
 			curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
 
 
-			curve.setRange(90, 200);
+			curve.setRange(90, 800);
 			infoString += "\n range="+curve.am;
 			curve.setCenter(new V(0, 0, 0)); // do not change
 
@@ -2478,8 +2505,8 @@ class Drawer{
 			segRightP = null;		
 			for(int i=0; i<10; i++){
 				// get random pO
-				V pTop = add(surface.center, new V(RDM.nextD(-EP.x*2, EP.x*2), 0, -hLO));
-				V pBottom = add(surface.center, new V(RDM.nextD(-EP.x*2, EP.x*2), 0, hLO));
+				V pTop = add(surface.center, new V(RDM.nextD(-EP.x*2, EP.x*2), 0, hLO));
+				V pBottom = add(surface.center, new V(RDM.nextD(-EP.x*2, EP.x*2), 0, -hLO));
 
 				// roll random 
 				pTop = V.ROLL(surface.sfCenterAxis, pTop, RDM.nextD(0, 360));
@@ -2528,6 +2555,93 @@ class Drawer{
 						}else if(drawAxis==V.AXIS_Z){
 							drLineXY(pTop, crossL);						
 						}
+					}
+				}
+				
+			}
+		}
+		
+		
+		System.out.println("end");
+		
+		
+		
+	}
+	
+	public void testSegSurfaceCrossZPP(){
+		System.out.println("begin");
+		
+		
+		crtDrawer = this;
+		double r = 300;
+		SegCurve curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
+		curve.setRange(90, 10);
+		curve.setCenter(new V(0, 0, 0));
+		curve = getInitedCurve(curve, false);
+
+		SegSurface surface = new SegSurface(curve, new V(0, 0, 0),  V.AXIS_Z);
+		
+		Color[] segColors = {Color.black, Color.red};
+		
+		for(int i=1; i<=curve.dv; i++){
+			pt.setColor(segColors[i%2]);
+			L segRight = surface.toSurfaceAxisPos(curve.getPSeg(i));
+			ppCicleZ(surface.sfCenterAxis, segRight.o);
+		}
+
+		V EC = surface.toSurfaceAxisPos(curve.getEndCenter());
+		V EP = surface.toSurfaceAxisPos(curve.getEndPoint());
+
+		Double hLO = EC.z*2;
+
+		pt.setColor(Color.lightGray);
+		drX(getVPP(surface.center).x);
+		drY(getVPP(surface.center).z);
+		drY(-hLO);
+		drY(hLO);
+
+		
+		
+		
+		for(int c = 0; c<1; c++){
+			
+			V segLeftP = null;
+			V segRightP = null;		
+			for(int i=0; i<10; i++){
+				// get random pO
+				V pTop = add(surface.center, new V(RDM.nextD(-EP.x*2, EP.x*2), 0, -hLO));
+				V pBottom = add(surface.center, new V(RDM.nextD(-EP.x*2, EP.x*2), 0, hLO));
+
+				// roll random 
+				pTop = V.ROLL(surface.sfCenterAxis, pTop, RDM.nextD(0, 360));
+				pBottom = V.ROLL(surface.sfCenterAxis, pBottom, RDM.nextD(0, 360));
+				
+
+				if(c==0){
+					pt.setColor(Color.green);
+					ppLine(pTop, pBottom);
+					
+				}
+				
+//				if(true)continue;
+				L inL = new L(pTop, sub(pBottom, pTop));
+				
+				
+				V crossP = surface.findCvCrossReal(inL);
+
+				
+//				L outL = surface.out(inL, curve.n);
+				
+//				pt.setColor(Color.black);
+//				if(outL!=null && outL.dir!=null){
+//						ppLine(outL, 300);
+//				}
+
+				if(crossP!=null){
+					if(c==0){
+						pt.setColor(Color.black);
+//						pt.setColor(Color.red);
+						ppLine(pTop, crossP);						
 					}
 				}
 				
@@ -2675,8 +2789,8 @@ class Drawer{
 									
 									// get in dir
 									V in = sub(add(mult(new V(cvi, 0, cvj), scaleR*1), curve.getEndCenter()), pImg).unit();
-//									L outLine = surface.out(new L(pImg, in), 1/curve.n);
-									L outLine = surface.outFor0(new L(pImg, in), 1/curve.n);
+									L outLine = surface.out(new L(pImg, in), 1/curve.n);
+//									L outLine = surface.outFor0(new L(pImg, in), 1/curve.n);
 									V out = outLine==null? null : outLine.dir;		
 
 //									pt.setColor(Color.lightGray);
@@ -3001,17 +3115,17 @@ class Drawer{
 //			curve = new SegCurve(r*0.95, r*2, r*2*hFind*1.3, 1.5); // stat with h find
 			curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
 			curve.setRange(90, accu);
-			curve.setCenter(new V(0, -0, 0));
+			curve.setCenter(new V(0, 0, 0));
 //			curve.setHue(7, 100);
-			
-			int dH = 0;
-			curve.setHue(7, 100, 0+dH, 20+dH, 40+dH, 60+dH, 80+dH, 100+dH, 120+dH, 140+dH, 150+dH);
-			
-			curve.initPArray();
 			
 			h = curve.h;
 			R = curve.l;
 
+			curve = getInitedCurve(curve, false);
+			
+			int dH = 0;
+			curve.setHue(7, 100, 0+dH, 20+dH, 40+dH, 60+dH, 80+dH, 100+dH, 120+dH, 140+dH, 150+dH);
+			
 		}
 		
 
@@ -4586,7 +4700,12 @@ class SegSurface implements Surface{
 	L sfCenterAxis;
 	double rolla;
 	
-	static V curveAxis = V.AXIS_Y;
+	int crossMode = CMODE_OPT;
+	
+	static final int CMODE_OPT = 0;
+	static final int CMODE_GEO = 1;
+	
+	static final V curveAxis = V.AXIS_Y;
 	
 	public SegSurface(SegCurve curve, V center, V axis) {
 		this.curve = curve;
@@ -4636,7 +4755,187 @@ class SegSurface implements Surface{
 		return toSurfaceAxisPos(findCvCross(toCurveAxisPos(in)));
 	}
 
+	private V findSegCross(L in, Integer sg) {
+		L segI0 = curve.getPSeg(sg);
+		L segI1 = curve.getPSeg(sg+1);
+
+		if(sg==0){
+			V p = add(in.o, mult(in.dir, ((segI1.o.y-in.o.y)/in.dir.y)));
+			if(U.aAbsSmallEqualb(p.absXZ(), (segI1.o.x))){
+				return p;
+			}else{
+				return null;
+			}
+		}
+		
+		double tg = segI0.dir.y/segI0.dir.x;
+		double yc = segI0.o.y+(curve.center.x-segI0.o.x)*tg;
+		V c = new V(curve.center.x, yc, curve.center.z);
+		
+		V cToO = sub(in.o, c);
+		
+		double A = U.pow2(tg) * V.multD2((in.dir.projXZ()))-U.pow2(in.dir.y);
+		double B = 2*( U.pow2(tg)*multD(cToO.projXZ(), in.dir.projXZ()) -in.dir.y*cToO.y );
+		double C = U.pow2(tg)* V.multD2(cToO.projXZ()) - U.pow2(cToO.y);
+		
+		double[] ls = U.defun(A, B, C);
+		if(ls==null){
+			return null;
+		}
+		for(double l : ls){
+			if(l<0){
+				continue;
+			}
+
+			V p = add(in.o, mult(in.dir, l));
+			if(segI1==null){
+				System.out.println(sg);
+			}
+			if( U.aInBC(p.y, segI0.o.y, segI1.o.y)){
+				double xz = sub(p, curve.center).absXZ();
+				double r0 = abs(segI0.o.x);
+				double r1 = abs(segI1.o.x);
+				if( U.aInBC(xz, r0, r1 )){
+					return p;
+				}else{
+//					System.out.println("..");
+				}
+			}else{
+//				Drawer.crtDrawer.pt.setColor(Color.red);
+//				System.out.println(p.y+",   ("+segI0.o.y+", "+segI1.o.y+")");
+//				Drawer.crtDrawer.fiRect(p.x, p.y, 4, 4);
+			}
+		}
+		
+		return null;
+	}
+
+	public void setCrossMode(int mode){
+		this.crossMode = mode;
+	}
+	
+	public Integer[] findCvDrossBetween(L in, int sgT, int sgB){
+		boolean fromTop = in.dir.y<0;
+		double distTop = distSegO(in, sgT);
+		double distBottom = distSegO(in, sgB);		
+		boolean inTop = U.aSmallEqualb(distTop, 0);
+		boolean inBottom = U.aSmallEqualb(distBottom, 0);
+
+		if(!fromTop && crossMode==CMODE_OPT && !inBottom){
+			return null;
+		}
+		
+		
+		if(inTop && inBottom){
+			return new Integer[]{sgT-1};
+		}else if(inTop && !inBottom){
+			if(fromTop){
+				return new Integer[]{sgT-1};
+			}else{
+				if(sgT+1==sgB){
+					return new Integer[]{sgT};
+				}
+				
+				int sgM = (sgT+sgB)/2;
+				double distMi = distSegO(in, sgM);		
+				boolean inMi = U.aSmallEqualb(distMi, 0);
+				if(inMi){
+					return findCvDrossBetween(in, sgM, sgB);
+				}else{
+					return findCvDrossBetween(in, sgT, sgM);
+				}
+			}
+		}else if(!inTop && inBottom){
+			if(sgT+1==sgB){
+				return new Integer[]{sgT};
+			}
+			
+			int sgM = (sgT+sgB)/2;
+			double distMi = distSegO(in, sgM);		
+			boolean inMi = U.aSmallEqualb(distMi, 0);
+			if(inMi){
+				return findCvDrossBetween(in, sgT, sgM);
+			}else{
+				return findCvDrossBetween(in, sgM, sgB);
+			}
+		}else if(!inTop && !inBottom){
+			if(sgT+1==sgB){
+				return new Integer[]{sgT};
+			}
+			
+			int sgM = (sgT+sgB)/2;
+			double distMi = distSegO(in, sgM);		
+			boolean inMi = U.aSmallEqualb(distMi, 0);
+			if(inMi){
+				return fromTop? findCvDrossBetween(in, sgT, sgM) : findCvDrossBetween(in, sgM, sgB);
+			}
+			
+			if(sgT+2==sgB){
+				return new Integer[]{sgM, sgM+1};
+			}
+			
+			int sgM2 = sgM+1;
+			double distMi2 = distSegO(in, sgM2);		
+			boolean inMi2 = U.aSmallEqualb(distMi2, 0);
+
+			if(inMi2){
+				return fromTop? new Integer[]{sgM} : findCvDrossBetween(in, sgM2, sgB);
+			}else{
+				if(U.aSmallb(distMi, distMi2)){
+					return findCvDrossBetween(in, sgT, sgM2);
+				}else if(U.aBigb(distMi, distMi2)){
+					return findCvDrossBetween(in, sgM, sgB);
+				}else {
+					return new Integer[]{sgM};
+				}
+				
+			}
+
+		}
+		
+		return null;
+	}
+	
+	// for segI>0, in.dir.y!=0
+	public double distSegO(L in, int sgI){
+		L segI = curve.getPSeg(sgI);
+		V pL = add(in.o, mult(in.dir, ((segI.o.y-in.o.y)/in.dir.y)));
+		return pL.absXZ() - abs(segI.o.x);
+	}
+	
+	// new
 	public V findCvCross(L in){
+		Integer[] possibleSg = findCvDrossBetween(in, 1, curve.dv);
+		if(possibleSg==null){
+			return null;
+		}else if(possibleSg.length==1){
+			return findSegCross(in, possibleSg[0]);
+		}else{
+			if(in.dir.y<0){
+				for(int i=0; i<possibleSg.length; i++){
+					if(possibleSg[i]==null){
+						System.out.println("length="+possibleSg.length);
+					}
+					V res = possibleSg[i]<curve.dv? findSegCross(in, possibleSg[i]) : null;
+					if(res != null){
+						return res;
+					}
+				}
+			}else if(in.dir.y>0){
+				for(int i=possibleSg.length-1; i>=0; i--){
+					V res = possibleSg[i]<curve.dv? findSegCross(in, possibleSg[i]) : null;
+					if(res != null){
+						return res;
+					}
+				}
+			}
+		}
+		
+		return null;
+	}
+	
+
+	public V findCvCrossB(L in){
 		int i = 0;
 		int iBorder = curve.dv;
 		int di = 1;
@@ -4683,11 +4982,7 @@ class SegSurface implements Surface{
 				segI0 = null;
 				segI1 = null;
 				continue;
-			}else {
-				if(false){
-					continue;
-				}
-				
+			}else {				
 				if(segI0.dir.y!=0){
 					V segI00 = add(segI0.o, mult(segI0.dir, -curve.r/curve.dv/segI0.dir.x));
 					V segI11 = add(segI0.o, mult(segI0.dir, 2*curve.r/curve.dv/segI0.dir.x));
