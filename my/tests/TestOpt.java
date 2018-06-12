@@ -5349,7 +5349,12 @@ class SegCurve implements Serializable{
 	public String toString(){
 		return r+"_"+l+"_"+h+"_"+n+"_"+am+"_"+dv+"__"+center.x+"_"+center.y+"_"+center.z+"_"+getInitMethod();
 	}
-	
+
+	public String getStdName(){
+		return (l/r)+"_"+(h/r)+"_"+n+"_"+am+"_"+dv+"__"+getInitMethod();
+		
+	}
+
 	public void init() {
 		boolean inited = false;
 		if(initMethod==null){
@@ -6093,8 +6098,57 @@ class Gra{
 	}	
 }
 
+class IPDirRec{
+	public int rDir;
+	public int rIp;
+	public int rMnIp;
+	public int rCvDiv;
+	public double ARange;
+	
+	private double hDir;
+	private String objName;
+	SegCurve curve;
 
-class DirCounts{
+	List<int[]>[][] IpDirs;
+	DirCounts dirCounts;
+	Integer[][] DirIPs;
+
+	public IPDirRec(int rDir, int rIp, int rMnIp, int rCvDiv, double ARange) {
+		super();
+		this.rDir = rDir;
+		this.rIp = rIp;
+		this.rMnIp = rMnIp;
+		this.rCvDiv = rCvDiv;
+		this.ARange = ARange;
+		
+		hDir = rDir/T(ARange);
+	}
+
+	public double getHDir(){
+		return hDir;
+	}
+
+	public void setCurve(SegCurve curve){
+		this.curve = curve;
+	}
+	
+	public String calObjName(){
+		return rDir+"_"+rIp+"_"+rMnIp+"_"+rCvDiv+"_"+ARange+"__"+curve.getStdName();
+	}
+	
+	public void rec(){
+		objName = calObjName();
+
+		
+		
+		
+	}
+	
+	
+}
+
+class DirCounts implements Serializable{
+	private static final long serialVersionUID = 3006051378467273177L;
 
 	IPCounts[][] dirsIPs;
 	int dirR;
@@ -6167,7 +6221,9 @@ class DirCounts{
 
 }
 
-class IPCounts{
+class IPCounts implements Serializable{
+	private static final long serialVersionUID = -2619409562435070912L;
+
 	Map<Integer, Double> ipMap;
 	IJtoK ijk;
 	public IPCounts(IJtoK ijk){
@@ -6261,7 +6317,31 @@ class Oct{
 
 }
 
-class IJtoK{
+class MapArrayAccess<T>{
+	Map<Integer, T>[][] datas;
+	IJtoK ijToK;
+
+	public MapArrayAccess(Map<Integer, T>[][] datas, int ri, int rj){
+		this.datas = datas;
+		ijToK = new IJtoK(ri, rj);
+	}
+
+	public MapArrayAccess(Map<Integer, T>[][] datas, int r){
+		this.datas = datas;
+		ijToK = new IJtoK(r);
+	}
+	
+	public void setData(int arrX, int arrY, int ri, int rj, T val){
+		if(datas[arrX][arrY]==null){
+			datas[arrX][arrY] = new HashMap<Integer, T>();
+		}
+		datas[arrX][arrY].put(ijToK.getK(ri, rj), val);
+	}
+}
+
+class IJtoK implements Serializable{
+	private static final long serialVersionUID = 8086376179961220082L;
+
 	int ri;
 	int Ri;
 	
