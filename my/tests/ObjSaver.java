@@ -15,8 +15,12 @@ public class ObjSaver<T>{
 		ObjSaver.folderPath = folderPath;
 	}
 	
+	public static String getClassNameForFile(Class<?> clazz){
+		return clazz.getSimpleName().replaceAll("(\\[\\])+", "_arrays");
+	}
+	
 	private static String getFileName(Object obj, String name){
-		return getFileName(obj.getClass().getSimpleName(), name);
+		return getFileName(getClassNameForFile(obj.getClass()), name);
 	}
 	
 	private static String getFileName(String className, String name){
@@ -46,20 +50,20 @@ public class ObjSaver<T>{
 
 	public static Object readObj(Class<?> clazz, String name){
 		try{
-			String filePath = folderPath+"/"+getFileName(clazz.getSimpleName(), name);
+			String filePath = folderPath+"/"+getFileName(getClassNameForFile(clazz), name);
 			ObjectInputStream input = new ObjectInputStream(new FileInputStream(filePath));
 			Object obj = input.readObject();
 			input.close();
 			return obj;
 		}catch (Exception e) {
-			e.printStackTrace();
+			System.out.println("stored " + clazz.getName() + " obj " + name + " not found");
 			return null;
 		}
 	}
 
 	public T readObjT(Class clazz, String name){
 		try{
-			String filePath = folderPath+"/"+getFileName(clazz.getSimpleName(), name);
+			String filePath = folderPath+"/"+getFileName(getClassNameForFile(clazz), name);
 			ObjectInputStream input = new ObjectInputStream(new FileInputStream(filePath));
 			ObjS os = (ObjS)input.readObject();
 			input.close();
