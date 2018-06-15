@@ -445,8 +445,8 @@ class Drawer{
 //		statisticA();
 
 		
-		testIPDirRec();
-		
+//		testIPDirRec();
+		testSfcCllMtx();
 		
 		
 		
@@ -3061,12 +3061,36 @@ class Drawer{
 	}
 
 	
-	
-	
-	
-	
-	
-	
+	public void testSfcCllMtx(){
+		SegCurve curve = getTestCurve(false);
+		IPDirRec ipDirRec = new IPDirRec(500, 50, 5, 20, 60);
+		ipDirRec.setCurve(curve);
+		
+		SfcCllMtx mtx = new SfcCllMtx(curve, ipDirRec, null);
+		mtx.initObs(1, 300, 45);
+		mtx.initClls();
+		
+		mtx.calMtxScnColors(1);
+		
+		double maxSeg = 0;
+		for(V[] vs: mtx.scnColors){
+			if(vs==null)continue;
+			for(V v : vs){
+				if(v==null)continue;
+				maxSeg = max( maxSeg, max(v.x, max(v.y, v.z)));
+			}
+		}
+		
+		for(int i=-mtx.pxScnR; i<mtx.pxScnR; i++){
+			for(int j=-mtx.pxScnR; j<mtx.pxScnR; j++){
+				V vij = mtx.scnColors[i+mtx.pxScnR][j+mtx.pxScnR];
+				Color cij = vij==null? mtx.mtxBgColor : vToColor(vij, maxSeg, 1);
+				pt.setColor(cij);
+				drPoint(i, j);
+			}
+		}
+		
+	}
 	
 	
 	public Color vToColor(V vColor, double max, double colorPowerIndex){
@@ -4786,23 +4810,23 @@ class SegSurface implements Surface{
 
 		V f = findCvF(crossP);
 		if(f==null){
-			return null;
+			return new L(crossP, null);
 		}
 		
 		if( (in.dir.y<0 && V.a(in.dir, f)<PI/2) || (in.dir.y>=0 && V.a(in.dir, f)>PI/2) ){
-			return null;
+			return new L(crossP, null);
 		}
 		
 		V out = trm(f, in.dir, n);
 
 		if(out!=null && out.y*in.dir.y<=0){
-			out = null;
+			return new L(crossP, null);
 		}
 		
 		if(out!=null && out.y<0){
 			double distPlanEnd = sub(add(crossP, mult(out, (curve.getEndCenter().y-crossP.y)/out.y)), curve.getEndCenter()).absXZ();
 			if(distPlanEnd > abs(curve.getEndPoint().x)){
-				out = null;
+				return new L(crossP, null);
 			}
 		}
 		
@@ -5225,8 +5249,314 @@ class SegSurface implements Surface{
 		// TODO Auto-generated method stub
 		
 	}
+}
+
+class SfcCllMtx{
+	SegCurve curve;
+	IPDirRec ipDirRec;	
+	int pxCllR;
+
+	int pxCllW;		// cal
+	double dPx;		// cal
+	double dCllW;	// cal
+	
+	int clObsDist;
+	int pxScnR;
+	double rangeA;
+
+	int clRMtx; // cal
+	double pxScnH; // cal (to obs)
+	
+	V obsP; //cal
+	
+	int clTgtDist;	
+	double clTgtRso;
+	
+	SegSurface[][] clls;
+	V[][] scnColors;
+	
+	Color mtxBgColor = Color.black;
+	Color cllBgColor = Color.gray;
+	
+	public SfcCllMtx(SegCurve curve, IPDirRec ipDirRec, Integer pxCllR){
+		this.curve = curve;
+		this.ipDirRec = ipDirRec;
+		ipDirRec.setCurve(curve);
+		
+		dPx = curve.l/ipDirRec.rIp;
+		
+		pxCllR = pxCllR!=null ? pxCllR : ipDirRec.rIp;
+		pxCllW = pxCllR*2+1;
+		dCllW = pxCllW*dPx;
+	}
+
+	public void initObs(int clObsDist, int pxScnR, double rangeA){
+		this.clObsDist = clObsDist;
+		this.pxScnR = pxScnR;
+		this.rangeA = rangeA;
+		this.clRMtx = U.toI45(clObsDist*T(rangeA));
+		this.pxScnH = pxScnR/T(rangeA);
+		this.obsP = new V(0, 0, clObsDist*dCllW);
+		
+		initClls();
+	}
+	
+	public void initClls() {
+		clls = new SegSurface[clRMtx*2+1][clRMtx*2+1];
+		for(int x=-clRMtx; x<=clRMtx; x++){
+			for(int y=-clRMtx; y<=clRMtx; y++){
+				SegSurface surface = new SegSurface(curve, new V(x*dCllW, y*dCllW, 0), V.AXIS_Z);
+				setSurface(x, y, surface);
+			}
+		}
+		
+	}
+	
+	public SegSurface getSurface(int i, int j){
+		return clls[i+clRMtx][j+clRMtx];
+	}
+	
+	public void setSurface(int i, int j, SegSurface surface){
+		clls[i+clRMtx][j+clRMtx] = surface;
+	}
+	
+	public void calMtxScnColors(int pxStep){
+		scnColors = new V[pxScnR*2+1][pxScnR*2+1];
+		for(int x=-clRMtx; x<=clRMtx; x++){
+			for(int y=-clRMtx; y<=clRMtx; y++){
+				calCllScnColors(x, y, pxStep);
+			}
+
+		}
+	}
+
+	public void calCllScnColors2(int sfX, int sfY, int pxStep) {
+		for(int y=0; true; y+= pxStep){
+			int countValidPx = 0;
+			// area 1
+			for(int x=0; true; x+= pxStep){
+				boolean res = calPxColor(sfX, sfY, x, y);
+				if(res){
+					countValidPx++;
+				}else{
+					break;
+				}
+			}
+			
+			// area 4
+			for(int x=-1; true; x-= pxStep){
+				boolean res = calPxColor(sfX, sfY, x, y);
+				if(res){
+					countValidPx++;
+				}else{
+					break;
+				}
+			}
+
+			if(countValidPx==0){
+				break;
+			}
+		}
+
+		for(int y=-1; true; y-= pxStep){
+			int countValidPx = 0;
+			// area 2
+			for(int x=0; true; x+= pxStep){
+				boolean res = calPxColor(sfX, sfY, x, y);
+				if(res){
+					countValidPx++;
+				}else{
+					break;
+				}
+			}
+			
+			// area 4
+			for(int x=-1; true; x-= pxStep){
+				boolean res = calPxColor(sfX, sfY, x, y);
+				if(res){
+					countValidPx++;
+				}else{
+					break;
+				}
+			}
+
+			if(countValidPx==0){
+				break;
+			}
+		}
+
+	}
+
+	public void calCllScnColors(int sfX, int sfY, int pxStep) {
+		for(int x=0; true; x+= pxStep){
+			int countValidPx = 0;
+			// area 1
+			for(int y=0; true; y+= pxStep){
+				boolean res = calPxColor(sfX, sfY, x, y);
+				if(res){
+					countValidPx++;
+				}else{
+					break;
+				}
+			}
+			
+			// area 4
+			for(int y=-pxStep; true; y-= pxStep){
+				boolean res = calPxColor(sfX, sfY, x, y);
+				if(res){
+					countValidPx++;
+				}else{
+					break;
+				}
+			}
+
+			if(countValidPx==0){
+				break;
+			}
+		}
+
+		for(int x=-pxStep; true; x-= pxStep){
+			int countValidPx = 0;
+			// area 2
+			for(int y=0; true; y+= pxStep){
+				boolean res = calPxColor(sfX, sfY, x, y);
+				if(res){
+					countValidPx++;
+				}else{
+					break;
+				}
+			}
+			
+			// area 4
+			for(int y=-pxStep; true; y-= pxStep){
+				boolean res = calPxColor(sfX, sfY, x, y);
+				if(res){
+					countValidPx++;
+				}else{
+					break;
+				}
+			}
+
+			if(countValidPx==0){
+				break;
+			}
+		}
+
+	}
+
+	public boolean calPxColor(int sfX, int sfY, int pxX, int pxY) {
+		SegSurface surface = getSurface(sfX, sfY);
+		double endH = abs(curve.getEndPoint().y);
+		V p0 = add(surface.center, mult(new V(pxX, pxY, 0), dPx));
+		L in = new L(obsP, sub(p0, obsP));
+		V pE = add(obsP, mult(in.dir, (endH+obsP.z)/in.dir.z));
+
+		// out of rangeA
+		V scnPx = mult(in.dir, -pxScnH/in.dir.z);
+		int scnX = U.toI45(scnPx.x);
+		int scnY = U.toI45(scnPx.y);
+		
+		if(abs(scnX)>pxScnR || abs(scnY)>pxScnR){
+			return false;
+		}
+		
+
+		
+		int[][] range = getIndexRangeByP1P2(p0, pE);
+		if(hasInterrupt(sfX, sfY, in, range)){
+			return false;
+		}
+		
+		L out = surface.out(in, surface.curve.n);
+		if(out==null){
+			return false;
+		}
+		
+		Color c = null;
+		if(out.dir != null){
+			V imP = add(out.dir, mult(out.dir, (-surface.curve.h-out.o.z)/out.dir.z));
+			c = getImColor(imP);
+		}else{
+			c = cllBgColor;
+		}
+		
+		addColorCount(scnX, scnY, c);
+		
+		return true;
+	}
+
+	public void addColorCount(int x, int y, Color cl){
+		x += pxScnR;
+		y += pxScnR;
+		
+		V colorXY = scnColors[x][y];
+		if(colorXY==null){
+			colorXY = new V(0, 0, 0);
+			scnColors[x][y] = colorXY;
+		}
+		
+		scnColors[x][y] = add(colorXY, new V(cl.getRed(), cl.getGreen(), cl.getBlue()));
+	}
+	
+	public Color getImColor(V imP) {
+		int x = U.toI45(imP.x/dPx);
+		int y = U.toI45(imP.y/dPx);
+		
+		return Color.green;
+	}
+
+	private boolean hasInterrupt(int sfX, int sfY, L in, int[][] range) {
+		for(int i=range[0][0]; abs(i)<=abs(range[0][1]); i+=range[0][2]){
+			for(int j=range[1][0]; abs(j)<=abs(range[1][1]); j+=range[1][2]){
+				if(i==sfX && j==sfY){
+					return false;
+				}
+					
+				V cross = getSurface(i, j).findCvCrossReal(in);
+				if(cross != null && abs(i)<=abs(sfX) && abs(j)<=abs(sfY)){
+					return true;
+				}
+			}			
+		}
+		
+		return false;
+	}
+	
+	public int[] getIndexByP(V p){
+		return new int[]{
+				U.toI45(p.x/dCllW),
+				U.toI45(p.y/dCllW),
+		};
+	}
+	
+	public int[][] getIndexRangeByP1P2(V p1, V p2){
+		int xP1 = U.toI45(p1.x/dCllW);
+		int yP1 = U.toI45(p1.y/dCllW);
+
+		int xP2 = U.toI45(p2.x/dCllW);
+		int yP2 = U.toI45(p2.y/dCllW);
+
+		return new int[][]{
+			getMinMaxD(xP1, xP2),
+			getMinMaxD(yP1, yP2)
+		};
+		
+	}
+
+	private int[] getMinMaxD(int i1, int i2) {
+		boolean order12 = abs(i1)<=abs(i2);
+		int iMin = order12? i1 : i2;
+		int iMax = order12? i2 : i1;
+		int d = iMax>=iMin?1 : -1;
+		return new int[]{iMin, iMax, d};
+	}
+	
+
+	
+	
 	
 }
+
 
 // z=0;
 abstract class PlView implements Surface{
