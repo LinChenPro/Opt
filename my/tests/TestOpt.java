@@ -445,8 +445,8 @@ class Drawer{
 //		statisticA();
 
 		
-//		testIPDirRec();
-		testSfcCllMtx();
+		testIPDirRec();
+//		testSfcCllMtx();
 		
 		
 		
@@ -3031,11 +3031,18 @@ class Drawer{
 		dataRec.setCurve(curve);
 		
 		VList[][] ipDirs = dataRec.getIpDirs();
+		dataRec.getDirIPs();
+		
+		dataRec.dealFarDirs();
+		dataRec.dealNullDirs();
 		
 		Color[][] colorPave = {
-				{Color.white, Color.red}, {Color.green, Color.blue}
+				{Color.red, Color.white}, {Color.green, Color.blue}
 		};
 
+		pt.setColor(Color.gray);
+		fiRect(0, 0, dataRec.rDir, dataRec.rDir);
+		
 		for(int i=0; i<=dataRec.rIp*2; i++){
 			for(int j=0; j<=dataRec.rIp*2; j++){
 				
@@ -6584,11 +6591,6 @@ class IPDirRec{
 	public void calDatas(){
 		SegSurface surface = new SegSurface(curve, new V(0, 0, 0), V.AXIS_Y);
 		
-		dirCounts = new DirCounts(rDir, rIp);
-		dirIPs = new Integer[dirCounts.dirR*2+1][dirCounts.dirR*2+1];
-		ipDirs = new VList[rIp*2+1][rIp*2+1];
-
-		
 		int cellR = rMnIp * 2+1;
 		int cellBR = cellR * rIp;
 		
@@ -6598,55 +6600,64 @@ class IPDirRec{
 		double scale = curve.l/cellBR;  
 		double scaleCvr = curve.r/rCvDiv;
 
-		for(int i=0; i<=rIp; i++){
-			System.out.println("rec : i = "+i);
-			for(int j=0; j<=rIp; j++){
-				// a IP
-				V centerIJ = new V(i*cellR, 0, j*cellR);
-				
-				// sec 0.5 in cicle
-				if(centerIJ.abs()>cellBR || i<j){
-					continue;
-				}
+		dirCounts = (DirCounts)ObjSaver.readObj(DirCounts.class, dirCountsObjName());
+		if(dirCounts==null){
+			System.out.println("dirCounts not found");
+			dirCounts = new DirCounts(rDir, rIp);
+			
+			for(int i=0; i<=rIp; i++){
+				System.out.println("rec : i = "+i);
+				for(int j=0; j<=rIp; j++){
+					// a IP
+					V centerIJ = new V(i*cellR, 0, j*cellR);
+					
+					// sec 0.5 in cicle
+					if(centerIJ.abs()>cellBR || i<j){
+						continue;
+					}
 
-				if(j%5==0){
-					System.out.println("rec : \tj = "+j);
-				}
-				
-				for(int ic = -rMnIp; ic<=rMnIp; ic++){
-					for(int jc = -rMnIp; jc<=rMnIp; jc++){
-						// a mn ip
-						V pImg = add(mult(add(centerIJ, new V(ic, 0, jc)), scale), imgCenter);
-						
-						for(double cvi=-rCvDiv; cvi<=rCvDiv; cvi++){
-							for(double cvj=-rCvDiv; cvj<=rCvDiv; cvj++){							
-								Double rXY = new Double(pow(cvi*cvi+cvj*cvj, 0.5));
-								if(rXY>rCvDiv)continue;
+					if(j%5==0){
+						System.out.println("rec : \tj = "+j);
+					}
+					
+					for(int ic = -rMnIp; ic<=rMnIp; ic++){
+						for(int jc = -rMnIp; jc<=rMnIp; jc++){
+							// a mn ip
+							V pImg = add(mult(add(centerIJ, new V(ic, 0, jc)), scale), imgCenter);
+							
+							for(double cvi=-rCvDiv; cvi<=rCvDiv; cvi++){
+								for(double cvj=-rCvDiv; cvj<=rCvDiv; cvj++){							
+									Double rXY = new Double(pow(cvi*cvi+cvj*cvj, 0.5));
+									if(rXY>rCvDiv)continue;
 
-								// get in dir
-								V in = sub(add(mult(new V(cvi, 0, cvj), scaleCvr*1), curve.getEndCenter()), pImg).unit();
-//								L outLine = surface.out(new L(pImg, in), 1/curve.n);
-								L outLine = surface.outFor0(new L(pImg, in), 1/curve.n);
-								V out = outLine==null? null : outLine.dir;		
+									// get in dir
+									V in = sub(add(mult(new V(cvi, 0, cvj), scaleCvr*1), curve.getEndCenter()), pImg).unit();
+//									L outLine = surface.out(new L(pImg, in), 1/curve.n);
+									L outLine = surface.outFor0(new L(pImg, in), 1/curve.n);
+									V out = outLine==null? null : outLine.dir;		
 
-								if(out==null){
-									continue;
+									if(out==null){
+										continue;
+									}
+
+									V pXZ = add(curve.center, mult(out, hDir/out.y));
+									
+//									dirCounts.addValue(U.toI(pXZ.x), U.toI(pXZ.z), i, j, 1);
+									dirCounts.addValue(U.toI45(pXZ.x), U.toI45(pXZ.z), i, j, multD(in, V.AXIS_Y));
+//									dirCounts.addValueOct(U.toI45(pXZ.x), U.toI45(pXZ.z), i, j, multD(in, V.AXIS_Y));
+									
 								}
-
-								V pXZ = add(curve.center, mult(out, hDir/out.y));
-								
-//								dirCounts.addValue(U.toI(pXZ.x), U.toI(pXZ.z), i, j, 1);
-								dirCounts.addValue(U.toI45(pXZ.x), U.toI45(pXZ.z), i, j, multD(in, V.AXIS_Y));
-//								dirCounts.addValueOct(U.toI45(pXZ.x), U.toI45(pXZ.z), i, j, multD(in, V.AXIS_Y));
-								
 							}
 						}
 					}
+					
+					
 				}
-				
-				
 			}
 		}
+		
+		dirIPs = new Integer[dirCounts.dirR*2+1][dirCounts.dirR*2+1];
+		ipDirs = new VList[rIp*2+1][rIp*2+1];
 
 		IJtoK ipIJK = new IJtoK(rIp);
 		for(int i= -dirCounts.dirR; i<= dirCounts.dirR; i++){
@@ -6705,7 +6716,91 @@ class IPDirRec{
 		
 	}
 	
+	public void dealFarDirs() {
+		for(VList[] ipdirArr : ipDirs){
+			for(VList vList : ipdirArr){
+				if(vList != null){
+					vList.deleteFarValues(this);
+				}
+			}
+		}
+	}
 	
+	public void dealNullDirs() {
+		Integer[][] dirIpsNew = new Integer[rDir*2+1][rDir*2+1];
+		IJtoK ipIJK = new IJtoK(rIp);
+
+		for(int i=0; i<= rDir*2; i++){
+			for(int j=0; j<= rDir*2; j++){
+				if(true){
+
+					Map<Integer, Integer> ipCounts = new HashMap<Integer, Integer>();
+					int nullCount = 0;
+					
+					int paveR = 5;
+					for(int p=max(0, i-paveR); p<=min(rDir*2, i+paveR); p++){
+						for(int q=max(0, j-paveR); q<=min(rDir*2, j+paveR); q++){
+							Integer vpq = dirIPs[p][q];
+							if(vpq==null){
+								nullCount++;
+							}else{
+								if(ipCounts.containsKey(vpq)){
+									ipCounts.put(vpq, ipCounts.get(vpq)+1);
+								}else{
+									ipCounts.put(vpq, 1);
+								}
+							}							
+						}
+					}
+					int maxCount = 0;
+					Integer maxIp = null;
+					for(Map.Entry<Integer, Integer> entry : ipCounts.entrySet()){
+						if(entry.getValue()>maxCount){
+							maxCount = entry.getValue();
+							maxIp = entry.getKey();
+						}
+					}
+					
+					if(maxCount<nullCount){
+						maxIp = null;
+					}
+					
+					dirIpsNew[i][j] = maxIp;
+
+					if((maxIp!=null && !maxIp.equals(dirIPs[i][j])) || maxIp!=dirIPs[i][j]){
+						if(dirIPs[i][j] != null){
+							int ipI = ipIJK.getI(dirIPs[i][j]);
+							int ipJ = ipIJK.getJ(dirIPs[i][j]);
+							VList ipDirList = ipDirs[ipI+rIp][ipJ+rIp];
+							if(ipDirList != null){
+								ipDirList.dirs.remove(new V(i-rDir, j-rDir, getHDir()));
+							}
+						}
+						
+						if(maxIp!=null){
+							int ipI = ipIJK.getI(maxIp);
+							int ipJ = ipIJK.getJ(maxIp);
+							
+							VList ipDirList = ipDirs[ipI+rIp][ipJ+rIp];
+							if(ipDirList==null){
+								ipDirList = new VList(ipI, ipJ);
+								ipDirs[ipI+rIp][ipJ+rIp] = ipDirList;
+							}
+							ipDirList.dirs.add(new V(i-rDir, j-rDir, getHDir()));
+						}
+	
+					}
+					
+					
+				}else{
+					dirIpsNew[i][j] = dirIPs[i][j];
+				}
+			}
+		}
+		
+		dirIPs = dirIpsNew;
+	}
+
 }
 
 class DirCounts implements Serializable{
@@ -6789,10 +6884,70 @@ class VList implements Serializable{
 	int j;
 	List<V> dirs;
 	
+	V avgUnit = null;
+	Integer countV = null; 
+	Double aAvg = null;
+	
 	public VList(int i, int j){
 		this.i = i;
 		this.j = j;
 		dirs = new ArrayList<V>();
+	}
+	
+	public void calAvgUnit(){
+		if(dirs==null && dirs.isEmpty()){
+			avgUnit = null;
+			countV = null;
+		}
+		
+		V avg = new V(0, 0, 0);
+		int count = 0;
+		for(V dir : dirs){
+			if(dir!=null){
+				avg = add(avg, dir.unit());
+				count++;
+			}
+		}
+		countV = count;
+		avgUnit =  count==0? null : V.mult(avg, 1d/count).unit();
+	}
+	
+	public void calaAvg(){
+		double aDist = 0;
+		if(countV!=null && countV!=0 && avgUnit != null){
+			for(V dir : dirs){
+				if(dir!=null){
+					aDist += abs(ac(V.multD(dir.unit(), avgUnit)));
+				}
+			}
+			aAvg = aDist/countV;
+		}
+	}
+	
+	public void deleteFarValues(IPDirRec rec){
+		int countDel = 0;
+		calAvgUnit();
+		calaAvg();
+		do{
+			countDel = 0;
+			if(countV!=null && countV>0){
+				for(int i=0; i<dirs.size();){
+					V dir = dirs.get(i);
+					
+					if(dir!=null && abs(ac(V.multD(dir.unit(), avgUnit)))>aAvg*2){
+						dirs.remove(i);
+						if(rec != null){
+							rec.dirIPs[U.toI45(dir.x)+rec.rDir][U.toI45(dir.y)+rec.rDir] = null;
+						}
+						countDel++;
+					}else{
+						i++;
+					}
+				}
+			}
+			calAvgUnit();
+			calaAvg();
+		}while(countDel != 0);
 	}
 }
 
