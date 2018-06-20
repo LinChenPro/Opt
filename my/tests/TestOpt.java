@@ -441,11 +441,11 @@ class Drawer{
 //		testSegSurfaceCrossZInverse();
 //		testSegSurfaceCrossZPP();
 		
-//		testSegSurface();
+		testSegSurface();
 //		statisticA();
 
 		
-		testIPDirRec();
+//		testIPDirRec();
 //		testSfcCllMtx();
 		
 		
@@ -1440,7 +1440,7 @@ class Drawer{
 			
 			
 			
-			curve.setRange(90, 50);
+			curve.setRange(50, 50);
 			
 			
 			
@@ -1488,13 +1488,13 @@ class Drawer{
 				V colorSumRGB = new V(0, 0, 0);
 				double areaSum = 0d;
 				
-				for(int i=0; i<=curve.dv; i+=1){
+				for(int i=0; i<curve.dv; i+=1){
 					// part of
 //					if(i>curve.dv*0.7)continue;
 					
 					for(int dr = -1; dr<=1; dr+=2){
 						L seg = dr==-1?curve.getNSeg(abs(i)) : curve.getPSeg(abs(i));
-						
+						seg = new L(add(seg.o, mult(seg.dir, dr*0.5*curve.r/curve.dv/seg.dir.x)), seg.dir);
 						V dir = sub(seg.o, pXY);
 						
 						if(curve.n<1){
@@ -1586,7 +1586,7 @@ class Drawer{
 //			curve.setRange(90, 200);
 
 			curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
-			curve.setRange(90, 50);
+			curve.setRange(50, 50);
 //			curve = new SegCurve(r, r*2.4, r*2.7, 1/1.5);
 //			curve.setRange(40, 50);
 			curve.setCenter(new V(0, 0, 0)); // do not change
@@ -1651,6 +1651,8 @@ class Drawer{
 						int iXY = rXY.intValue();
 						L seg = curve.getPSeg(iXY);
 						if(seg==null)continue;
+						seg = new L(add(seg.o, mult(seg.dir, 0.5*curve.r/curve.dv/seg.dir.x)), seg.dir);
+
 						
 						V rollTo = new V(i, 0, k).unit();
 
@@ -1867,6 +1869,7 @@ class Drawer{
 								int iXY = rXY.intValue();
 								L seg = curve.getPSeg(iXY);
 								if(seg==null)continue;
+								seg = new L(add(seg.o, mult(seg.dir, 0.5*curve.r/curve.dv/seg.dir.x)), seg.dir);
 
 								V f = new V(-seg.dir.y, seg.dir.x, seg.dir.z);
 								if(f.y<0){
@@ -2026,7 +2029,7 @@ class Drawer{
 	}
 	
 	public SegCurve getTestCurve(boolean forceCreation){
-		String objName = "test Curve 800";
+		String objName = "test Curve 200 50";
 		boolean needCreation = forceCreation;
 		if(needCreation==false){
 			curve = (SegCurve)ObjSaver.readObjWhenNeed(SegCurve.class, curve, objName);
@@ -2044,7 +2047,7 @@ class Drawer{
 			curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
 
 
-			curve.setRange(90, 800);
+			curve.setRange(50, 200);
 			infoString += "\n range="+curve.am;
 			curve.setCenter(new V(0, 0, 0)); // do not change
 
@@ -2765,8 +2768,8 @@ class Drawer{
 //					}
 					
 					
-					Color c = Color.green; // fix
-//					Color c = (cellColors[RDM.nextI(0, cellColors.length)]); // random
+//					Color c = Color.green; // fix
+					Color c = (cellColors[RDM.nextI(0, cellColors.length)]); // random
 //					Color c = curve.getColor(centerIJ.abs()*scale, 1); // hue of curve
 					
 					int border = 0;
@@ -2889,88 +2892,86 @@ class Drawer{
 
 		
 		// show area shp
-		
-		
-		if(DIPs==null){
-			DIPs = new Integer[dirCounts.dirR*2+1][dirCounts.dirR*2+1];
-			for(int i= -dirCounts.dirR; i<= dirCounts.dirR; i++){
-				for(int j= -dirCounts.dirR; j<= dirCounts.dirR; j++){
-					Integer maxV = null;
-					double maxCt = 1;
-					double totalCount = 0;
-					double advance = 1;
-					int[][] dirOcts = Oct.getOctAll(i, j);
-					for(int octI=0; octI<8; octI++){
-						IPCounts ipCounts = dirCounts.getValue(dirOcts[octI][0], dirOcts[octI][1]);
-						
-						if(ipCounts != null && ipCounts.ipMap != null){
-							
-							for(Map.Entry<Integer, Double> entry : ipCounts.ipMap.entrySet()){
-								Integer ip = entry.getKey();
-								int[] ipOct = Oct.toIDis(ipCounts.ijk.getI(ip), ipCounts.ijk.getJ(ip),-octI);
-								if(ipOct != null){
-									Double d = entry.getValue();
-									totalCount += d;
-									if(d>maxCt){
-										advance = d/maxCt;
-										maxCt = d;
-										maxV = ipCounts.ijk.getK(ipOct[0], ipOct[1]);										
-									}else{
-										advance = min(advance, maxCt/d);
-									}
-								}
-							}
-
-						}
-					}
-
-//					maxCt*3>=totalCount ||
-					if(maxV != null && ( advance>1.2 )){
-						DIPs[i+dirCounts.dirR][j+dirCounts.dirR] = maxV;				
-					}else{
-						DIPs[i+dirCounts.dirR][j+dirCounts.dirR] = null;				
-					}
-				}
-			}
-		}
-		
-		Map<Integer, Color> clForArea = new HashMap<Integer, Color>();
-		for(int i= -dirCounts.dirR; i<= dirCounts.dirR; i++){
-			for(int j= -dirCounts.dirR; j<= dirCounts.dirR; j++){
-				Integer maxV = DIPs[i+dirCounts.dirR][j+dirCounts.dirR];
-				if(maxV != null){
-					Color c = clForArea.get(maxV);
-					if(c==null){
-						int mij = (300000+dirCounts.ijk.getI(maxV)%2*2+dirCounts.ijk.getJ(maxV))%4;
-						c =  mij==0?Color.red : mij==1? Color.green : mij==2? Color.white : Color.black; // fix
-//						c = (cellColors[RDM.nextI(0, cellColors.length)]); // random
-						clForArea.put(maxV, c);
-					}
-					
-					pt.setColor(c);
-					drPoint(i, j);
-				}	
-					
-			}
-		}
-		
-		
-		// show light sph
-//		for(int i=0; i<=U.toI(viewSphereR)*2; i++){
-//			for(int j=0; j<=U.toI(viewSphereR)*2; j++){
-//				V cij = colors[i][j];
-//				if( cij!= null){
-////					pt.setColor(new Color( U.toI(cij.x/maxC*255), U.toI(cij.y/maxC*255), U.toI(cij.z/maxC*255)));
-//					if(showColorByDensity){
-//						pt.setColor(vToColor(cij, maxC, colorPowerIndex));
-//					}else{
-//						pt.setColor(vToColor2(cij, maxC));
+//		if(DIPs==null){
+//			DIPs = new Integer[dirCounts.dirR*2+1][dirCounts.dirR*2+1];
+//			for(int i= -dirCounts.dirR; i<= dirCounts.dirR; i++){
+//				for(int j= -dirCounts.dirR; j<= dirCounts.dirR; j++){
+//					Integer maxV = null;
+//					double maxCt = 1;
+//					double totalCount = 0;
+//					double advance = 1;
+//					int[][] dirOcts = Oct.getOctAll(i, j);
+//					for(int octI=0; octI<8; octI++){
+//						IPCounts ipCounts = dirCounts.getValue(dirOcts[octI][0], dirOcts[octI][1]);
+//						
+//						if(ipCounts != null && ipCounts.ipMap != null){
+//							
+//							for(Map.Entry<Integer, Double> entry : ipCounts.ipMap.entrySet()){
+//								Integer ip = entry.getKey();
+//								int[] ipOct = Oct.toIDis(ipCounts.ijk.getI(ip), ipCounts.ijk.getJ(ip),-octI);
+//								if(ipOct != null){
+//									Double d = entry.getValue();
+//									totalCount += d;
+//									if(d>maxCt){
+//										advance = d/maxCt;
+//										maxCt = d;
+//										maxV = ipCounts.ijk.getK(ipOct[0], ipOct[1]);										
+//									}else{
+//										advance = min(advance, maxCt/d);
+//									}
+//								}
+//							}
+//
+//						}
 //					}
-//					drPoint(i-U.toI(viewSphereR), j-U.toI(viewSphereR));
-//				}else{
+//
+////					maxCt*3>=totalCount ||
+//					if(maxV != null && ( advance>1.2 )){
+//						DIPs[i+dirCounts.dirR][j+dirCounts.dirR] = maxV;				
+//					}else{
+//						DIPs[i+dirCounts.dirR][j+dirCounts.dirR] = null;				
+//					}
 //				}
 //			}
 //		}
+//		
+//		Map<Integer, Color> clForArea = new HashMap<Integer, Color>();
+//		for(int i= -dirCounts.dirR; i<= dirCounts.dirR; i++){
+//			for(int j= -dirCounts.dirR; j<= dirCounts.dirR; j++){
+//				Integer maxV = DIPs[i+dirCounts.dirR][j+dirCounts.dirR];
+//				if(maxV != null){
+//					Color c = clForArea.get(maxV);
+//					if(c==null){
+//						int mij = (300000+dirCounts.ijk.getI(maxV)%2*2+dirCounts.ijk.getJ(maxV))%4;
+//						c =  mij==0?Color.red : mij==1? Color.green : mij==2? Color.white : Color.black; // fix
+////						c = (cellColors[RDM.nextI(0, cellColors.length)]); // random
+//						clForArea.put(maxV, c);
+//					}
+//					
+//					pt.setColor(c);
+//					drPoint(i, j);
+//				}	
+//					
+//			}
+//		}
+		
+		
+		// show light sph
+		for(int i=0; i<=U.toI(viewSphereR)*2; i++){
+			for(int j=0; j<=U.toI(viewSphereR)*2; j++){
+				V cij = colors[i][j];
+				if( cij!= null){
+					pt.setColor(new Color( U.toI(cij.x/maxC*255), U.toI(cij.y/maxC*255), U.toI(cij.z/maxC*255)));
+					if(showColorByDensity){
+						pt.setColor(vToColor(cij, maxC, colorPowerIndex));
+					}else{
+						pt.setColor(vToColor2(cij, maxC));
+					}
+					drPoint(i-U.toI(viewSphereR), j-U.toI(viewSphereR));
+				}else{
+				}
+			}
+		}
 		
 
 		// positions
@@ -3203,7 +3204,7 @@ class Drawer{
 			
 //			curve = new SegCurve(r*0.95, r*2, r*2*hFind*1.3, 1.5); // stat with h find
 			curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
-			curve.setRange(90, accu);
+			curve.setRange(80, accu);
 			curve.setCenter(new V(0, 0, 0));
 //			curve.setHue(7, 100);
 			
@@ -3326,9 +3327,9 @@ class Drawer{
 //				statI = new XYStatA(-maxOut, maxOut, accu2*2*vPerAccu2);
 				statI = new XYStatA(-maxOut, maxOut, accu*2);
 			}
-			for(int j=-accu; j<=accu;j++){
+			for(int j=-accu+1; j<accu;j++){
 				double tg = j<0? -Ps[-j].z : Ps[j].z;
-				V pXY = j<0? new V(-Ps[-j].x, Ps[-j].y, 0) : new V(Ps[j].x, Ps[j].y, 0);
+				V pXY = j<0? new V(-(Ps[-j].x+Ps[-j+1].x)/2, (Ps[-j].y+Ps[-j+1].y)/2, 0) : new V((Ps[j].x+Ps[j+1].x)/2, (Ps[j].y+Ps[j+1].y)/2, 0);
 				V dirIn = sub(pXY, pO).unit();
 				V f = new V(-tg, 1, 0);
 				V dirOut = trm(f, dirIn, 1/n);
@@ -5145,7 +5146,8 @@ class SegSurface implements Surface{
 	
 	public V findCvF(V p){
 		V cP = sub(p, curve.center);
-		int iXY = U.toI45(cP.absXZ()/curve.r*curve.dv);
+//		int iXY = U.toI45(cP.absXZ()/curve.r*curve.dv);
+		int iXY = U.toI(cP.absXZ()/curve.r*curve.dv);
 		L seg = curve.getPSeg(iXY);
 		if(seg==null){
 			return null;
@@ -5996,18 +5998,27 @@ class SegCurve implements Serializable{
 				int countValieOut = 0;
 				for(int d=0; d<=dv; d++){
 //					double aOut = 90-d*am/dv; // average
+//					double aOut = 90-d*90/dv; // average 90
 					double aOut = 90 - AS(min(1, abs(n*S(AT(d*l/dv/h))))); // trm value in O
+					
+					
 					
 					V pO = new V(-d*l/dv, -h, 0);
 					
-					V outL = trm(fL, sub(pLeft, pO), 1/n);
-					V outR = trm(fR, sub(p, pO), 1/n);
+//					V outL = trm(fL, sub(pLeft, pO), 1/n);
+//					V outR = trm(fR, sub(p, pO), 1/n);
+					
+					V outL = trm(fL, sub(add(pLeft, mult(segL.dir, -0.5*dx/segL.dir.x)), pO), 1/n);
+					V outR = trm(fR, sub(add(p, mult(setR.dir, 0.5*dx/setR.dir.x)), pO), 1/n);
+
 					
 //					System.out.println("i="+i+", a="+a+", d="+d+", aOut="+aOut+", left=("+sub(pLeft, pO).AXY()+","+(outL==null?"null":outL.AXY())+"), right=("+sub(p, pO).AXY()+","+(outR==null?"null":outR.AXY())+")");
 					
+					double di = 2-(abs(i-d)*1d/dv);
+					double indiceDi = 0;
 					if(outL!=null && outL.y>=0){
 						SDDatas[d*2][0] = outL.AXY()-aOut;
-						SDDatas[d*2][1] = abs(V.multDU(fL, outL));
+						SDDatas[d*2][1] = abs(V.multDU(fL, outL)) * pow(di, indiceDi);
 						countValieOut++;
 					}else{
 						SDDatas[d*2][0] = 0;
@@ -6016,7 +6027,7 @@ class SegCurve implements Serializable{
 					
 					if(outR!=null && outR.y>=0){
 						SDDatas[d*2+1][0] = outR.AXY()-aOut;
-						SDDatas[d*2+1][1] = abs(V.multDU(fR, outR));
+						SDDatas[d*2+1][1] = abs(V.multDU(fR, outR)) * pow(di, indiceDi);
 						countValieOut++;
 					}else{
 						SDDatas[d*2+1][0] = 0;
