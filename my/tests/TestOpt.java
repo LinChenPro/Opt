@@ -431,7 +431,7 @@ class Drawer{
 //		test7V2();
 
 
-//		test7V3();
+		test7V3();
 //		test7V3D();
 
 //		test7V3DInverse();
@@ -441,7 +441,7 @@ class Drawer{
 //		testSegSurfaceCrossZInverse();
 //		testSegSurfaceCrossZPP();
 		
-		testSegSurface();
+//		testSegSurface();
 //		statisticA();
 
 		
@@ -1440,8 +1440,8 @@ class Drawer{
 			
 			
 			
-			curve.setRange(50, 50);
-			
+			curve.setRange(50, 200);
+			SegCurve.modeMiddle=true;
 			
 			
 //			curve = new SegCurve(r, r*2.4, r*2.7, 1.5);
@@ -1452,7 +1452,7 @@ class Drawer{
 //			curve.setRange(40, 200);
 			
 			curve.setCenter(new V(0, -200, 0));
-			curve.setHue(7, 100);
+			curve.setHue(2, 100);
 			
 			int dH = 0;
 //			curve.setHue(7, 100, 0+dH, 10+dH, 20+dH, 30+dH, 40+dH, 50+dH, 60+dH, 70+dH, 80+dH, 90+dH, 100+dH, 110+dH, 120+dH, 130+dH, 140+dH, 150+dH);
@@ -1493,9 +1493,10 @@ class Drawer{
 //					if(i>curve.dv*0.7)continue;
 					
 					for(int dr = -1; dr<=1; dr+=2){
-						L seg = dr==-1?curve.getNSeg(abs(i)) : curve.getPSeg(abs(i));
-						seg = new L(add(seg.o, mult(seg.dir, dr*0.5*curve.r/curve.dv/seg.dir.x)), seg.dir);
-						V dir = sub(seg.o, pXY);
+						L seg = dr==-1?curve.getNSeg(i) : curve.getPSeg(i);
+						L pst = new L(dr==-1?curve.getPstN(i) : curve.getPstP(i), seg.dir);
+//						L pst = new L(add(seg.o, mult(seg.dir, dr*0.5*curve.r/curve.dv/seg.dir.x)), seg.dir);
+						V dir = sub(pst.o, pXY);
 						
 						if(curve.n<1){
 							dir = trm(new V(0,-1,0), dir, 1/curve.n);
@@ -1507,7 +1508,7 @@ class Drawer{
 //							continue;
 //						}
 
-						V f = new V(-seg.dir.y, seg.dir.x, seg.dir.z);
+						V f = new V(-pst.dir.y, pst.dir.x, pst.dir.z);
 						if(f.y<0){
 							f = new V(-f.x, -f.y, f.z );
 						}
@@ -1517,7 +1518,7 @@ class Drawer{
 						}
 					
 						
-						L lo = new L(seg.o, trm(f, dir, curve.n));
+						L lo = new L(pst.o, trm(f, dir, curve.n));
 						if(lo!=null && lo.dir != null && lo.dir.y<0){
 							// get cross point:
 							double distY = curve.center.y-curve.h - lo.o.y;
@@ -1525,7 +1526,7 @@ class Drawer{
 							V pImg = new V(xImg, curve.center.y-curve.h, 0);
 							Color c = curve.getColor(xImg-curve.center.x, 1f);
 							
-							V pDest = add(lo.o, mult(lo.dir, (-curve.h-seg.o.y)/lo.dir.y));
+							V pDest = add(lo.o, mult(lo.dir, (-curve.h-pst.o.y)/lo.dir.y));
 
 //							double ASeg = tgSeg==null ? 90 : AT(tgSeg);
 //							double AIn = tgIn==null ? 90 : AT(tgIn);
@@ -1651,21 +1652,21 @@ class Drawer{
 						int iXY = rXY.intValue();
 						L seg = curve.getPSeg(iXY);
 						if(seg==null)continue;
-						seg = new L(add(seg.o, mult(seg.dir, 0.5*curve.r/curve.dv/seg.dir.x)), seg.dir);
+						L pst = new L(curve.getPstP(iXY), seg.dir);
 
 						
 						V rollTo = new V(i, 0, k).unit();
 
-						V f = new V(-seg.dir.y, seg.dir.x, seg.dir.z);
+						V f = new V(-pst.dir.y, pst.dir.x, pst.dir.z);
 						if(f.y<0){
 							f = new V(-f.x, -f.y, f.z );
 						}
 						
 						f = new V(f.x*rollTo.x, f.y, f.x*rollTo.z);
 						
-						seg =new L(new V(seg.o.x*rollTo.x, seg.o.y, seg.o.x*rollTo.z), new V(seg.dir.x*rollTo.x, seg.o.y, seg.dir.x*rollTo.z));
+						pst =new L(new V(pst.o.x*rollTo.x, pst.o.y, pst.o.x*rollTo.z), new V(pst.dir.x*rollTo.x, pst.o.y, pst.dir.x*rollTo.z));
 
-						V dir = sub(seg.o, pXY);
+						V dir = sub(pst.o, pXY);
 
 						if(curve.n<1){
 							dir = trm(new V(0,-1,0), dir, 1/curve.n);
@@ -1676,10 +1677,10 @@ class Drawer{
 							continue;
 						}
 						
-						L lo = new L(seg.o, trm(f, dir, curve.n));
+						L lo = new L(pst.o, trm(f, dir, curve.n));
 						
 						if(lo.dir!=null && lo.dir.y<0){
-							V pDest = add(lo.o, mult(lo.dir, (-curve.h-seg.o.y)/lo.dir.y));
+							V pDest = add(lo.o, mult(lo.dir, (-curve.h-pst.o.y)/lo.dir.y));
 							// get cross point:
 							double distY = curve.center.y-curve.h - lo.o.y;
 							double xImg = lo.o.x + distY/lo.dir.y * lo.dir.x;
@@ -1869,9 +1870,9 @@ class Drawer{
 								int iXY = rXY.intValue();
 								L seg = curve.getPSeg(iXY);
 								if(seg==null)continue;
-								seg = new L(add(seg.o, mult(seg.dir, 0.5*curve.r/curve.dv/seg.dir.x)), seg.dir);
+								L pst = new L(curve.getPstP(iXY), seg.dir);
 
-								V f = new V(-seg.dir.y, seg.dir.x, seg.dir.z);
+								V f = new V(-pst.dir.y, pst.dir.x, pst.dir.z);
 								if(f.y<0){
 									f = new V(-f.x, -f.y, f.z );
 								}
@@ -1879,19 +1880,19 @@ class Drawer{
 								if(cvj!=0 || cvi!=0){
 									V rollTo = new V(cvi, 0, cvj).unit();
 									f = new V(f.x*rollTo.x, f.y, f.x*rollTo.z);
-									seg =new L(new V(seg.o.x*rollTo.x, seg.o.y, seg.o.x*rollTo.z), new V(seg.dir.x*rollTo.x, seg.o.y, seg.dir.x*rollTo.z));
+									pst =new L(new V(pst.o.x*rollTo.x, pst.o.y, pst.o.x*rollTo.z), new V(pst.dir.x*rollTo.x, pst.o.y, pst.dir.x*rollTo.z));
 								}
 								
 								
 								// get in dir
-								V in = sub(seg.o, pImg);
+								V in = sub(pst.o, pImg);
 
 //								old condition
 								// of no cross // to change by using directely points in plat y0
 								V end = curve.getEndPoint();
 								double endR = sub(end, curve.center).absXZ();
 								
-								double yPp = (end.y-pImg.y)/(seg.o.y-pImg.y);
+								double yPp = (end.y-pImg.y)/(pst.o.y-pImg.y);
 								V crossY0 = add(pImg, mult(in, yPp));
 								if(sub(crossY0, curve.center).absXZ()>endR){
 									continue;
@@ -5743,6 +5744,9 @@ class SegCurve implements Serializable{
 	
 	L[] pArray;
 
+	static boolean modeMiddle = true;
+
+	
 	public String toString(){
 		return r+"_"+l+"_"+h+"_"+n+"_"+am+"_"+dv+"__"+center.x+"_"+center.y+"_"+center.z+"_"+getInitMethod();
 	}
@@ -6005,11 +6009,16 @@ class SegCurve implements Serializable{
 					
 					V pO = new V(-d*l/dv, -h, 0);
 					
-//					V outL = trm(fL, sub(pLeft, pO), 1/n);
-//					V outR = trm(fR, sub(p, pO), 1/n);
+					V outL = null;
+					V outR = null;
+					if(modeMiddle){
+						outL = trm(fL, sub(add(pLeft, mult(segL.dir, -0.5*dx/segL.dir.x)), pO), 1/n);
+						outR = trm(fR, sub(add(p, mult(setR.dir, 0.5*dx/setR.dir.x)), pO), 1/n);
+					}else{
+						outL = trm(fL, sub(pLeft, pO), 1/n);
+						outR = trm(fR, sub(p, pO), 1/n);
+					}
 					
-					V outL = trm(fL, sub(add(pLeft, mult(segL.dir, -0.5*dx/segL.dir.x)), pO), 1/n);
-					V outR = trm(fR, sub(add(p, mult(setR.dir, 0.5*dx/setR.dir.x)), pO), 1/n);
 
 					
 //					System.out.println("i="+i+", a="+a+", d="+d+", aOut="+aOut+", left=("+sub(pLeft, pO).AXY()+","+(outL==null?"null":outL.AXY())+"), right=("+sub(p, pO).AXY()+","+(outR==null?"null":outR.AXY())+")");
@@ -6103,6 +6112,26 @@ class SegCurve implements Serializable{
 		}
 	}
 
+	public V getPstP(int i){
+		if(i>dv || i<0){
+			return null;
+		}
+		
+		if(modeMiddle){
+			return add(center, mult(add(pArray[i].o, pArray[i+1].o), 0.5));  // new 1
+//			return mult(add(getPSeg(i).o, getPSeg(i+1).o), 0.5);  //new 2
+		}else{
+			return getPSeg(i).o; // old
+		}
+	}
+	
+	public V getPstN(int i){
+		if(i>dv || i<0){
+			return null;
+		}
+		
+		return mult(getPstP(i), new V(-1, 1, 1));
+	}
 	
 }
 
