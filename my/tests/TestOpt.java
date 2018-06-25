@@ -1440,7 +1440,7 @@ class Drawer{
 			
 			
 			
-			curve.setRange(50, 200);
+			curve.setRange(60, 50);
 			SegCurve.modeMiddle=true;
 			
 			
@@ -1452,13 +1452,14 @@ class Drawer{
 //			curve.setRange(40, 200);
 			
 			curve.setCenter(new V(0, -200, 0));
-			curve.setHue(2, 100);
+			curve.setHue(7, 100);
 			
 			int dH = 0;
 //			curve.setHue(7, 100, 0+dH, 10+dH, 20+dH, 30+dH, 40+dH, 50+dH, 60+dH, 70+dH, 80+dH, 90+dH, 100+dH, 110+dH, 120+dH, 130+dH, 140+dH, 150+dH);
 			
 //			curve.initPArray_simple();
 			curve.initPArray();
+//			curve.initPArray_plat();
 //			curve.initPArray_average();
 		}
 		
@@ -1481,6 +1482,7 @@ class Drawer{
 				double absR = sub(pXY, curve.center).abs();
 //				if(absR<=h*0.1 || absR>=h*0.5+200){
 //				if(absR<=h*0.2-5 || absR>=h*0.2+5){
+//				if(absR<=h*0.2 || absR>=h*0.9+20){
 				if(absR<=h*0.7 || absR>=h*0.7+20){
 					continue;
 				}
@@ -3212,7 +3214,9 @@ class Drawer{
 			h = curve.h;
 			R = curve.l;
 
-			curve = getInitedCurve(curve, false);
+//			curve = getInitedCurve(curve, false);
+			curve.initPArray_plat();
+//			curve.initPArray();
 			
 			int dH = 0;
 			curve.setHue(7, 100, 0+dH, 20+dH, 40+dH, 60+dH, 80+dH, 100+dH, 120+dH, 140+dH, 150+dH);
@@ -5929,6 +5933,22 @@ class SegCurve implements Serializable{
 
 		}
 
+	}
+	
+	public void initPArray_plat(){
+		pArray = new L[dv+1];
+		pArray[0] = new L(new V(0, 0, 0), new V(1, 0, 0));
+		double dx = r/dv;
+		for(int i=1; i<=dv; i++){
+			double tg0 = pArray[i-1].dir.y / pArray[i-1].dir.x;
+			double x = pArray[i-1].o.x+dx;
+			double y = pArray[i-1].o.y+dx*tg0;
+			
+			V p = new V(x, y, pArray[i-1].o.z);
+
+			pArray[i] = new L(p, new V(1, 0, 0));
+
+		}
 	}
 
 	private double averageForI(P1P2AOutToADir fun, int i, V p) {
