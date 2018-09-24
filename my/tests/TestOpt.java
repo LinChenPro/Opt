@@ -431,7 +431,7 @@ class Drawer{
 //		test7V2();
 
 
-		test7V3();
+//		test7V3();
 //		test7V3D();
 
 //		test7V3DInverse();
@@ -450,7 +450,7 @@ class Drawer{
 		
 		
 		
-//		showFunction();
+		showFunction();
 //		showTrm();
 		
 //		showHSQX();
@@ -3358,8 +3358,12 @@ class Drawer{
 	}
 	
 	public void showFunction(){
-			P1P2AOutToADir fun = new P1P2AOutToADir(1/1.5);
-			drFun(fun, new V(0,-320,0), new V(2,2,0));
+//			P1P2AOutToADir fun = new P1P2AOutToADir(1/1.5);
+//			drFun(fun, new V(0,-320,0), new V(2,2,0));
+			
+			dNToDO fun2 = new dNToDO(1.5);
+			drFun(fun2, new V(0,0,0), new V(8,8,0));
+
 		
 	}
 	
@@ -4576,6 +4580,7 @@ abstract class FunReal{
 	public abstract double[] fun(double[] xs);
 
 	public abstract void show(Drawer drawer, V pO, V scale);
+	
 }
 
 abstract class FunRealXY extends FunReal{
@@ -4584,6 +4589,46 @@ abstract class FunRealXY extends FunReal{
 		Double y = fun(xs[0]);
 		return y==null? null : new double[]{y};
 	} 
+
+	public void showPointXY(Drawer drawer, V pO, V scale, double x){
+		drawer.drPoint(x*scale.x+pO.x, fun(x)*scale.y+pO.y);
+	}
+}
+
+class dNToDO extends FunRealXY{
+	double n;
+	
+	public dNToDO(double n){
+		this.n = n;
+	}
+
+	@Override
+	public Double fun(double a) {
+		if(S(a)*n>1)return 0d;
+		return a-AS(S(a)*n);
+	}
+
+	@Override
+	public void show(Drawer drawer, V pO, V scale) {
+		double rangeXY = 90;
+		double dXY = 0.1;
+		
+		
+		for(double i=-rangeXY; i<=rangeXY; i+=10){
+			drawer.drX(i*scale.x);
+			drawer.drY(i*scale.y);
+		}
+
+		drawer.pt.setColor(Color.RED);
+		for(double i=-rangeXY; i<=rangeXY; i+=dXY){
+			showPointXY(drawer, pO, scale, i);
+		}
+		
+		System.out.println("finished");
+
+	}
+	
+	
 }
 
 class OutToADir extends FunRealXY{
